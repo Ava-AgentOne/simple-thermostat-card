@@ -1,0 +1,6 @@
+{
+  "name": "Simple Thermostat (Ava-AgentOne)",
+  "homeassistant": "2024.1.0",
+  "render_readme": true,
+  "filename": "simple-thermostat.js"
+}
