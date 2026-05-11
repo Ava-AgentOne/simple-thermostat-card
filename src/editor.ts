@@ -109,13 +109,6 @@ export default class SimpleThermostatEditor extends LitElement {
                 @change=${this.valueChanged}
               ></ha-switch>
             </ha-formfield>
-            <ha-formfield label="Show mode headings?">
-              <ha-switch
-                .checked=${this.config?.layout?.mode?.headings !== false}
-                .configValue="${'layout.mode.headings'}"
-                @change=${this.valueChanged}
-              ></ha-switch>
-            </ha-formfield>
           </div>
           <!-- AVA-AGENTONE END -->
 
@@ -170,18 +163,6 @@ export default class SimpleThermostatEditor extends LitElement {
           </div>
 
           <div class="side-by-side">
-            <ha-select
-              label="Decimals (optional)"
-              .configValue=${'decimals'}
-              .value="${this.config.decimals?.toString() ?? ''}"
-              @selected="${this._selectChanged}"
-              @closed="${(e) => e.stopPropagation()}"
-            >
-              ${Object.values(OptionsDecimals).map(
-                (item) => html`<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`
-              )}
-            </ha-select>
-
             <ha-textfield
               label="Unit (optional)"
               .value="${this.config.unit ?? ''}"
@@ -190,31 +171,57 @@ export default class SimpleThermostatEditor extends LitElement {
             ></ha-textfield>
           </div>
 
-          <div class="side-by-side">
-            <ha-select
-              label="Step Layout (optional)"
-              .configValue=${'layout.step'}
-              .value="${this.config.layout?.step ?? ''}"
-              @selected="${this._selectChanged}"
-              @closed="${(e) => e.stopPropagation()}"
-            >
-              ${Object.values(OptionsStepLayout).map(
-                (item) => html`<ha-list-item .value="${item}">${item}</ha-list-item>`
-              )}
-            </ha-select>
+          <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
+               Per v3.4 spec: these are reachable but hidden by default to declutter the
+               editor. Step Layout was explicitly kept; Decimals and Step Size are kept
+               here too for completeness (rather than removed entirely) so users can still
+               adjust them without dropping to YAML. -->
+          <ha-expansion-panel
+            class="ava-advanced-panel"
+            outlined
+            header="Advanced"
+          >
+            <div class="side-by-side">
+              <ha-select
+                label="Decimals (optional)"
+                .configValue=${'decimals'}
+                .value="${this.config.decimals?.toString() ?? ''}"
+                @selected="${this._selectChanged}"
+                @closed="${(e) => e.stopPropagation()}"
+              >
+                ${Object.values(OptionsDecimals).map(
+                  (item) => html`<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`
+                )}
+              </ha-select>
 
-            <ha-select
-              label="Step Size (optional)"
-              .configValue=${'step_size'}
-              .value="${this.config.step_size?.toString() ?? ''}"
-              @selected="${this._selectChanged}"
-              @closed="${(e) => e.stopPropagation()}"
-            >
-              ${Object.values(OptionsStepSize).map(
-                (item) => html`<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`
-              )}
-            </ha-select>
-          </div>
+              <ha-select
+                label="Step Size (optional)"
+                .configValue=${'step_size'}
+                .value="${this.config.step_size?.toString() ?? ''}"
+                @selected="${this._selectChanged}"
+                @closed="${(e) => e.stopPropagation()}"
+              >
+                ${Object.values(OptionsStepSize).map(
+                  (item) => html`<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`
+                )}
+              </ha-select>
+            </div>
+
+            <div class="side-by-side">
+              <ha-select
+                label="Step Layout (optional)"
+                .configValue=${'layout.step'}
+                .value="${this.config.layout?.step ?? ''}"
+                @selected="${this._selectChanged}"
+                @closed="${(e) => e.stopPropagation()}"
+              >
+                ${Object.values(OptionsStepLayout).map(
+                  (item) => html`<ha-list-item .value="${item}">${item}</ha-list-item>`
+                )}
+              </ha-select>
+            </div>
+          </ha-expansion-panel>
+          <!-- AVA-AGENTONE END -->
 
           <!-- AVA-AGENTONE START: HVAC modes visibility section -->
           ${this._renderHvacModes()}
@@ -267,23 +274,39 @@ export default class SimpleThermostatEditor extends LitElement {
   // available modes (each as `true` or `false`), or delete `control.hvac` entirely
   // when every mode is visible.
 
-  // Dedicated handler for <ha-select> dropdowns (Decimals / Step Layout / Step Size).
-  // The shared `valueChanged` had two bugs that broke these:
-  //   1. ha-select's `selected` event re-fires when HA pushes config back into the
-  //      editor, which would overwrite the user's choice with stale state.
-  //   2. `delete copy[target.configValue]` doesn't handle dotted paths like
-  //      'layout.step' — it deletes a literal key, no-op.
-  // This handler guards against the re-fire by comparing the new value to what's
-  // already in config, and walks the path for delete.
+  // Dedicated handler for <ha-select> dropdowns.
+  //
+  // v3.4 diagnostic: HA's ha-select fires `selected` BEFORE its own .value
+  // property updates (see home-assistant/frontend src/components/ha-select.ts).
+  // The authoritative read path is ev.detail.value; ev.target.value is stale
+  // at this point. Earlier versions read target first and fell back to detail,
+  // which is why the editor silently dropped every selection.
+  //
+  // Also: numeric option values round-trip through HA as strings, so we coerce
+  // them back via the configValue→type map when needed.
   _selectChanged(ev: any) {
     if (!this.config || !this.hass) return
     const target = ev.target
     if (!target?.configValue) return
 
-    const newValue = target.value ?? ev.detail?.value
+    // Authoritative: ev.detail.value (HA emits {value} in detail).
+    let newValue: any = ev.detail?.value
+    if (newValue === undefined) newValue = target.value
+
+    // Coerce known-numeric configValues so YAML stays type-correct.
+    const numericConfigValues = ['decimals', 'step_size']
+    if (
+      numericConfigValues.includes(target.configValue) &&
+      newValue !== undefined &&
+      newValue !== null &&
+      newValue !== ''
+    ) {
+      const n = Number(newValue)
+      if (!Number.isNaN(n)) newValue = n
+    }
+
     const currentValue = this._readConfigPath(target.configValue)
-    const normalize = (v: any) => (v == null ? '' : String(v))
-    if (normalize(currentValue) === normalize(newValue)) return
+    if (currentValue === newValue) return
 
     const copy: any = cloneDeep(this.config)
     if (newValue == null || newValue === '') {

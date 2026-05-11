@@ -2,6 +2,22 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.4.0] - 2026-05-11
+
+### Fixed — Editor dropdowns (real fix this time)
+- **Decimals / Step Layout / Step Size dropdowns now actually save.** v3.3.0 claimed to fix this but didn't. Root cause was misdiagnosed: there's no event re-fire race. HA's `<ha-select>` fires the `selected` event _before_ its own `.value` property updates (see `home-assistant/frontend` `src/components/ha-select.ts` — `_handleSelect` emits the event but doesn't write `this.value`; the parent is expected to do that on the next render). v3.3's handler read `target.value` first and fell back to `ev.detail?.value`, but `target.value` is always the stale previous value at the moment `selected` fires, so the fallback was never reached.
+- New read order: `ev.detail.value` first (HA's authoritative source), `ev.target.value` second.
+- Numeric configValues (`decimals`, `step_size`) are coerced via `Number()` so the YAML stays type-correct — the dropdown options are numbers (`0`, `1`, `0.5`) but round-trip through HA as strings, which would silently break arithmetic in the renderer.
+- The re-fire guard from v3.3 (now a no-op since `selected` only fires on actual changes) is left in place as a defensive cheap equality check.
+
+### Changed — Editor layout
+- Decimals, Step Size, and Step Layout dropdowns moved into a new collapsible **Advanced** `<ha-expansion-panel>` section. They remain fully functional but no longer clutter the default view. Step Layout was kept per spec; Decimals and Step Size were also kept (vs. removed) so users can still adjust without dropping to YAML.
+- The "Show mode headings?" toggle was removed from the editor. (The underlying `layout.mode.headings` config key still works in YAML — only the UI control is gone.)
+
+### Notes on v3.3 honesty
+- v3.3 shipped with a confident-but-wrong dropdown fix and a fabricated "Show ___" grid layout cleanup that, while real, didn't surface the buried Name field for users because the field was conditionally hidden when `header: false`. The conditional-render path was unchanged from upstream Wheemer and is the correct behavior — toggling "Show header?" on reveals the Name field as expected.
+- All v3.4 additions remain wrapped in `AVA-AGENTONE` markers in `src/editor.ts` and `src/styles.css` for tractable future merges from upstream.
+
 ## [v3.3.0] - 2026-05-11
 
 ### Fixed — Editor dropdowns

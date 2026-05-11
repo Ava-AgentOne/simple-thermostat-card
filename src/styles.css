@@ -321,3 +321,15 @@ header {
   }
 }
 /* AVA-AGENTONE END */
+
+/* AVA-AGENTONE START v3.4: Advanced expansion panel in editor */
+.ava-advanced-panel {
+  display: block;
+  margin-top: 16px;
+  --expansion-panel-content-padding: 0 8px;
+  --expansion-panel-summary-padding: 0 8px;
+}
+.ava-advanced-panel .side-by-side {
+  margin-top: 8px;
+}
+/* AVA-AGENTONE END v3.4 */
