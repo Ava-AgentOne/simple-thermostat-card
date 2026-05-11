@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.4.0";
+var version = "3.5.0";
 
 /**
  * @license
@@ -590,10 +590,12 @@ class SimpleThermostatEditor extends i$1 {
           </div>
 
           <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
-               Per v3.4 spec: these are reachable but hidden by default to declutter the
-               editor. Step Layout was explicitly kept; Decimals and Step Size are kept
-               here too for completeness (rather than removed entirely) so users can still
-               adjust them without dropping to YAML. -->
+               v3.5: switched from slotted <ha-list-item> children to .options property.
+               Post-Feb-2026 ha-select uses ha-dropdown internally and only fires
+               selected when ha-dropdown-item children dispatch wa-select. Slotted
+               ha-list-item renders visually via slot fallback but never wires the
+               event chain — selection silently does nothing. Using .options lets
+               ha-select render proper ha-dropdown-items itself. -->
           <ha-expansion-panel
             class="ava-advanced-panel"
             outlined
@@ -603,34 +605,37 @@ class SimpleThermostatEditor extends i$1 {
               <ha-select
                 label="Decimals (optional)"
                 .configValue=${'decimals'}
-                .value="${(_v = (_u = this.config.decimals) === null || _u === void 0 ? void 0 : _u.toString()) !== null && _v !== void 0 ? _v : ''}"
-                @selected="${this._selectChanged}"
-                @closed="${(e) => e.stopPropagation()}"
-              >
-                ${Object.values(OptionsDecimals).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
-              </ha-select>
+                .value=${(_v = (_u = this.config.decimals) === null || _u === void 0 ? void 0 : _u.toString()) !== null && _v !== void 0 ? _v : ''}
+                .options=${OptionsDecimals.map((v) => ({
+            value: v.toString(),
+            label: v.toString(),
+        }))}
+                @selected=${this._selectChanged}
+              ></ha-select>
 
               <ha-select
                 label="Step Size (optional)"
                 .configValue=${'step_size'}
-                .value="${(_x = (_w = this.config.step_size) === null || _w === void 0 ? void 0 : _w.toString()) !== null && _x !== void 0 ? _x : ''}"
-                @selected="${this._selectChanged}"
-                @closed="${(e) => e.stopPropagation()}"
-              >
-                ${Object.values(OptionsStepSize).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
-              </ha-select>
+                .value=${(_x = (_w = this.config.step_size) === null || _w === void 0 ? void 0 : _w.toString()) !== null && _x !== void 0 ? _x : ''}
+                .options=${OptionsStepSize.map((v) => ({
+            value: v.toString(),
+            label: v.toString(),
+        }))}
+                @selected=${this._selectChanged}
+              ></ha-select>
             </div>
 
             <div class="side-by-side">
               <ha-select
                 label="Step Layout (optional)"
                 .configValue=${'layout.step'}
-                .value="${(_z = (_y = this.config.layout) === null || _y === void 0 ? void 0 : _y.step) !== null && _z !== void 0 ? _z : ''}"
-                @selected="${this._selectChanged}"
-                @closed="${(e) => e.stopPropagation()}"
-              >
-                ${Object.values(OptionsStepLayout).map((item) => b `<ha-list-item .value="${item}">${item}</ha-list-item>`)}
-              </ha-select>
+                .value=${(_z = (_y = this.config.layout) === null || _y === void 0 ? void 0 : _y.step) !== null && _z !== void 0 ? _z : ''}
+                .options=${OptionsStepLayout.map((v) => ({
+            value: v,
+            label: v,
+        }))}
+                @selected=${this._selectChanged}
+              ></ha-select>
             </div>
           </ha-expansion-panel>
           <!-- AVA-AGENTONE END -->
@@ -668,8 +673,13 @@ class SimpleThermostatEditor extends i$1 {
         fireEvent(this, 'config-changed', { config: copy });
     }
     toggleHeader(ev) {
-        this.config.header = ev.target.checked ? {} : false;
-        fireEvent(this, 'config-changed', { config: this.config });
+        // v3.5: Properly clone config rather than mutating this.config directly.
+        // The previous mutation pattern could leave Lit's change detection unsure
+        // whether to re-render, which may explain why the Name textfield didn't
+        // appear after toggling Show header on.
+        const copy = cloneDeep(this.config);
+        copy.header = ev.target.checked ? {} : false;
+        fireEvent(this, 'config-changed', { config: copy });
     }
     // AVA-AGENTONE START: HVAC modes editor methods + dropdown fix
     // Auto-discovers the climate entity's hvac_modes and lets the user toggle each.
