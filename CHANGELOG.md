@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.2.1] - 2026-05-11
+
+### Fixed
+- **HVAC modes editor: toggling any mode hid all buttons.** The upstream `control.hvac` config key uses allow-list semantics — as soon as any non-`_` key is set, modes not explicitly truthy get filtered out at render time. The previous editor wrote just `{ <mode>: false }`, which flipped that switch and accidentally hid every mode. The editor now writes the full enumeration of available modes (each `true` or `false`) on every toggle, or deletes `control.hvac` entirely when all modes are visible. Existing YAML written by hand continues to work unchanged.
+- Editor's `_isHvacModeEnabled` read path now correctly mirrors runtime filter logic, so the initial toggle states match what the card actually renders even for hand-edited configs with partial mode lists.
+
 ## [v3.2.0] - 2026-05-11
 
 ### Added — UI editor: HVAC modes section

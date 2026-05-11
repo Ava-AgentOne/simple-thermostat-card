@@ -252,9 +252,13 @@ export default class SimpleThermostatEditor extends LitElement {
   }
 
   // AVA-AGENTONE START: HVAC modes editor methods
-  // Reads available hvac_modes from the selected climate entity and lets the
-  // user toggle each one on/off. Writes to `control.hvac.<mode>: false` on hide,
-  // deletes the key on show. Cleans up empty parent objects so YAML stays tidy.
+  // Auto-discovers the climate entity's hvac_modes and lets the user toggle each.
+  //
+  // IMPORTANT: upstream `control.hvac` is an ALLOW-LIST when populated, not a deny-list.
+  // As soon as ONE non-underscore key is present, any mode not explicitly truthy is
+  // filtered out at render time. So we must always write the FULL enumeration of
+  // available modes (each as `true` or `false`), or delete `control.hvac` entirely
+  // when every mode is visible.
 
   _isHvacModeEnabled(mode: string): boolean {
     const ctrl: any = this.config?.control
@@ -263,14 +267,39 @@ export default class SimpleThermostatEditor extends LitElement {
     const hvac = ctrl.hvac
     if (hvac === false) return false
     if (!hvac || typeof hvac !== 'object') return true
-    return hvac[mode] !== false
+
+    // Allow-list semantics: if hvac has any non-meta key, unlisted modes are hidden.
+    const hasNonMetaKeys = Object.keys(hvac).some((k) => !k.startsWith('_'))
+    if (hasNonMetaKeys) {
+      const value = hvac[mode]
+      if (value === undefined) return false
+      if (typeof value === 'object' && value !== null) {
+        return value.include !== false
+      }
+      return value !== false
+    }
+    // Empty / meta-only object → defaults apply, all modes visible.
+    return true
   }
 
   _hvacModeChanged(mode: string, checked: boolean) {
     const copy: any = cloneDeep(this.config)
 
-    // Normalize `control` to object form. The editor only writes object form;
-    // if the user had `control: false` or a string[] array, we replace with {}.
+    // Pull all available modes for this entity from hass state.
+    const entityId = copy.entity
+    const stateObj = entityId ? this.hass?.states?.[entityId] : null
+    const allModes: string[] = stateObj?.attributes?.hvac_modes ?? []
+
+    // If we can't resolve the mode list (entity not loaded yet), bail.
+    if (allModes.length === 0) return
+
+    // Compute the visibility state for every mode AFTER this toggle.
+    const newVisibility: Record<string, boolean> = {}
+    for (const m of allModes) {
+      newVisibility[m] = m === mode ? checked : this._isHvacModeEnabled(m)
+    }
+
+    // Normalize `control` to object form. Editor only writes object form.
     if (
       !copy.control ||
       typeof copy.control !== 'object' ||
@@ -278,20 +307,19 @@ export default class SimpleThermostatEditor extends LitElement {
     ) {
       copy.control = {}
     }
-    if (!copy.control.hvac || typeof copy.control.hvac !== 'object') {
-      copy.control.hvac = {}
-    }
 
-    if (checked) {
-      delete copy.control.hvac[mode]
-    } else {
-      copy.control.hvac[mode] = false
-    }
-
-    // Tidy: remove empty objects so we don't leave `control: {}` cruft in YAML.
-    if (Object.keys(copy.control.hvac).length === 0) {
+    const allVisible = allModes.every((m) => newVisibility[m])
+    if (allVisible) {
+      // Every mode visible → drop the override so defaults apply.
       delete copy.control.hvac
+    } else {
+      // Allow-list mode: write the full enumeration so unlisted modes don't vanish.
+      copy.control.hvac = {}
+      for (const m of allModes) {
+        copy.control.hvac[m] = newVisibility[m]
+      }
     }
+
     if (Object.keys(copy.control).length === 0) {
       delete copy.control
     }
