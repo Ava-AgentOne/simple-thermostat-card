@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.8.1] - 2026-05-11
+
+### Fixed — Toggles and inner fields read as empty/disabled (v3.8.0 bug)
+
+In v3.8.0, the toggles inside grid groups (Show header, Show mode names, etc.) and the Name/Icon fields all rendered as disabled/empty even though the underlying config had the values set. The form was visible but inert.
+
+Root cause: `<ha-form>`'s internal `getValue(obj, item)` returns `obj[item.name]` for any item that has a non-empty `name` property. I'd given my grid wrappers names like `display_options` and `header_fields`. The form looked for `formData.display_options` (which didn't exist — my flat data has no such key) and passed `undefined` to all grid children. They got nothing.
+
+Fix: use `name: ''` on grid wrappers. With an empty name, `getValue` returns the whole `obj` (form data), and the grid's children find their values by their own names. This matches HA's tile-card-editor convention for grouped layouts.
+
+(The expandable `Advanced` panel already had `flatten: true`, which has the same effect for that path — that section worked fine.)
+
 ## [v3.8.0] - 2026-05-11
 
 ### Changed — Editor rewritten on `<ha-form>` with selectors

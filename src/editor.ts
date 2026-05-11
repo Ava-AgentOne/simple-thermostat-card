@@ -117,7 +117,7 @@ export default class SimpleThermostatEditor extends LitElement {
         selector: { entity: { domain: 'climate' } },
       },
       {
-        name: 'display_options',
+        name: '',
         type: 'grid',
         schema: [
           { name: 'show_header', selector: { boolean: {} } },
@@ -129,7 +129,7 @@ export default class SimpleThermostatEditor extends LitElement {
       ...(headerVisible
         ? [
             {
-              name: 'header_fields',
+              name: '',
               type: 'grid',
               schema: [
                 { name: 'header_name', selector: { text: {} } },
@@ -144,7 +144,7 @@ export default class SimpleThermostatEditor extends LitElement {
         flatten: true,
         schema: [
           {
-            name: 'advanced_grid',
+            name: '',
             type: 'grid',
             schema: [
               {
