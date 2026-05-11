@@ -16,12 +16,99 @@ export default class SimpleThermostatEditor extends LitElement {
         };
     };
     setConfig(config: any): void;
+    _toFormData(): {
+        entity: any;
+        show_header: boolean;
+        show_mode_names: boolean;
+        show_mode_icons: boolean;
+        show_mode_headings: boolean;
+        header_name: any;
+        header_icon: any;
+        decimals: string;
+        step_size: string;
+        step_layout: any;
+    };
+    _fromFormData(data: any): CardConfig;
+    _schema(formData: any): ({
+        name: string;
+        required: boolean;
+        selector: {
+            entity: {
+                domain: string;
+            };
+        };
+        type?: undefined;
+        schema?: undefined;
+        flatten?: undefined;
+    } | {
+        name: string;
+        type: string;
+        schema: {
+            name: string;
+            selector: {
+                boolean: {};
+            };
+        }[];
+        required?: undefined;
+        selector?: undefined;
+        flatten?: undefined;
+    } | {
+        name: string;
+        type: string;
+        schema: ({
+            name: string;
+            selector: {
+                text: {};
+                icon?: undefined;
+            };
+        } | {
+            name: string;
+            selector: {
+                icon: {};
+                text?: undefined;
+            };
+        })[];
+        required?: undefined;
+        selector?: undefined;
+        flatten?: undefined;
+    } | {
+        name: string;
+        type: string;
+        flatten: boolean;
+        schema: ({
+            name: string;
+            type: string;
+            schema: {
+                name: string;
+                selector: {
+                    select: {
+                        options: {
+                            value: string;
+                            label: string;
+                        }[];
+                    };
+                };
+            }[];
+            selector?: undefined;
+        } | {
+            name: string;
+            selector: {
+                select: {
+                    options: {
+                        value: string;
+                        label: string;
+                    }[];
+                };
+            };
+            type?: undefined;
+            schema?: undefined;
+        })[];
+        required?: undefined;
+        selector?: undefined;
+    })[];
+    _computeLabel: (schema: any) => string;
     render(): import("lit-html").TemplateResult<1>;
-    valueChanged(ev: any): void;
-    toggleHeader(ev: any): void;
-    _selectChanged(ev: any): void;
-    _readConfigPath(path: string): any;
-    _deleteConfigPath(obj: any, path: string): void;
+    _formValueChanged: (ev: CustomEvent) => void;
     _isHvacModeEnabled(mode: string): boolean;
     _hvacModeChanged(mode: string, checked: boolean): void;
     _formatModeName(mode: string): string;

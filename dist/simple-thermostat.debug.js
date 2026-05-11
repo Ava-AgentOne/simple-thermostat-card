@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.7.0";
+var version = "3.8.0";
 
 /**
  * @license
@@ -439,21 +439,6 @@ function fireEvent(node, type, detail, options = {}) {
     return event;
 }
 
-function setValue(obj, path, value) {
-    const pathFragments = path.split('.');
-    let o = obj;
-    while (pathFragments.length - 1) {
-        var fragment = pathFragments.shift();
-        if (!o.hasOwnProperty(fragment))
-            o[fragment] = {};
-        o = o[fragment];
-    }
-    o[pathFragments[0]] = value;
-}
-const OptionsDecimals = [0, 1];
-const OptionsStepSize = [0.5, 1];
-const OptionsStepLayout = ['column', 'row'];
-const includeDomains = ['climate'];
 const stub = {
     header: {},
     layout: {
@@ -461,7 +446,47 @@ const stub = {
     },
 };
 const cloneDeep = (obj) => JSON.parse(JSON.stringify(obj));
+// AVA-AGENTONE v3.8: editor fully rewritten to use <ha-form> with selectors.
+//
+// Rationale: HA has been progressively replacing element-level web components
+// (ha-textfield, ha-icon-input, mwc-list-item slot in ha-select, etc.) with a
+// new generation built on webawesome internals. Custom-card editors that wire
+// individual elements one by one keep breaking as those internals change.
+// ha-form + selectors is the path HA's own card editors use, because it lets
+// HA own all the rendering decisions; the schema is a stable declarative API.
+//
+// The HVAC modes section is NOT moved into the schema. Its toggles depend on
+// hvac_modes attributes from the live state object, which changes per entity.
+// ha-form schemas are best when static. Keeping it as a custom render below
+// the form is cleaner than trying to memoize per-entity schemas.
 class SimpleThermostatEditor extends i$1 {
+    constructor() {
+        super(...arguments);
+        this._computeLabel = (schema) => {
+            var _a;
+            const labels = {
+                entity: 'Entity',
+                show_header: 'Show header?',
+                show_mode_names: 'Show mode names?',
+                show_mode_icons: 'Show mode icons?',
+                show_mode_headings: 'Show mode headings?',
+                header_name: 'Name (optional)',
+                header_icon: 'Icon (optional)',
+                advanced: 'Advanced',
+                decimals: 'Decimals (optional)',
+                step_size: 'Step Size (optional)',
+                step_layout: 'Step Layout (optional)',
+            };
+            return (_a = labels[schema.name]) !== null && _a !== void 0 ? _a : schema.name;
+        };
+        this._formValueChanged = (ev) => {
+            ev.stopPropagation();
+            if (!this.config || !this.hass)
+                return;
+            const newConfig = this._fromFormData(ev.detail.value);
+            fireEvent(this, 'config-changed', { config: newConfig });
+        };
+    }
     static get styles() {
         return css_248z;
     }
@@ -474,240 +499,176 @@ class SimpleThermostatEditor extends i$1 {
     setConfig(config) {
         this.config = config || Object.assign({}, stub);
     }
+    // ---- Data adapter: nested CardConfig <-> flat form data ----
+    _toFormData() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        const c = this.config || {};
+        return {
+            entity: (_a = c.entity) !== null && _a !== void 0 ? _a : '',
+            show_header: c.header !== false,
+            show_mode_names: ((_c = (_b = c.layout) === null || _b === void 0 ? void 0 : _b.mode) === null || _c === void 0 ? void 0 : _c.names) !== false,
+            show_mode_icons: ((_e = (_d = c.layout) === null || _d === void 0 ? void 0 : _d.mode) === null || _e === void 0 ? void 0 : _e.icons) !== false,
+            show_mode_headings: ((_g = (_f = c.layout) === null || _f === void 0 ? void 0 : _f.mode) === null || _g === void 0 ? void 0 : _g.headings) !== false,
+            header_name: c.header && c.header !== false ? (_h = c.header.name) !== null && _h !== void 0 ? _h : '' : '',
+            header_icon: c.header && c.header !== false ? (_j = c.header.icon) !== null && _j !== void 0 ? _j : '' : '',
+            decimals: c.decimals != null ? String(c.decimals) : '',
+            step_size: c.step_size != null ? String(c.step_size) : '',
+            step_layout: (_l = (_k = c.layout) === null || _k === void 0 ? void 0 : _k.step) !== null && _l !== void 0 ? _l : '',
+        };
+    }
+    _fromFormData(data) {
+        const copy = cloneDeep(this.config) || {};
+        if (data.entity)
+            copy.entity = data.entity;
+        else
+            delete copy.entity;
+        if (data.show_header === false) {
+            copy.header = false;
+        }
+        else {
+            if (copy.header === false || !copy.header)
+                copy.header = {};
+            if (data.header_name)
+                copy.header.name = data.header_name;
+            else
+                delete copy.header.name;
+            if (data.header_icon)
+                copy.header.icon = data.header_icon;
+            else
+                delete copy.header.icon;
+        }
+        if (!copy.layout)
+            copy.layout = {};
+        if (!copy.layout.mode)
+            copy.layout.mode = {};
+        const writeMode = (key, val) => {
+            if (val === false)
+                copy.layout.mode[key] = false;
+            else
+                delete copy.layout.mode[key];
+        };
+        writeMode('names', data.show_mode_names);
+        writeMode('icons', data.show_mode_icons);
+        writeMode('headings', data.show_mode_headings);
+        if (Object.keys(copy.layout.mode).length === 0)
+            delete copy.layout.mode;
+        if (data.decimals === '' || data.decimals == null)
+            delete copy.decimals;
+        else
+            copy.decimals = Number(data.decimals);
+        if (data.step_size === '' || data.step_size == null)
+            delete copy.step_size;
+        else
+            copy.step_size = Number(data.step_size);
+        if (data.step_layout)
+            copy.layout.step = data.step_layout;
+        else
+            delete copy.layout.step;
+        if (Object.keys(copy.layout).length === 0)
+            delete copy.layout;
+        return copy;
+    }
+    _schema(formData) {
+        const headerVisible = formData.show_header !== false;
+        return [
+            {
+                name: 'entity',
+                required: true,
+                selector: { entity: { domain: 'climate' } },
+            },
+            {
+                name: 'display_options',
+                type: 'grid',
+                schema: [
+                    { name: 'show_header', selector: { boolean: {} } },
+                    { name: 'show_mode_names', selector: { boolean: {} } },
+                    { name: 'show_mode_icons', selector: { boolean: {} } },
+                    { name: 'show_mode_headings', selector: { boolean: {} } },
+                ],
+            },
+            ...(headerVisible
+                ? [
+                    {
+                        name: 'header_fields',
+                        type: 'grid',
+                        schema: [
+                            { name: 'header_name', selector: { text: {} } },
+                            { name: 'header_icon', selector: { icon: {} } },
+                        ],
+                    },
+                ]
+                : []),
+            {
+                name: 'advanced',
+                type: 'expandable',
+                flatten: true,
+                schema: [
+                    {
+                        name: 'advanced_grid',
+                        type: 'grid',
+                        schema: [
+                            {
+                                name: 'decimals',
+                                selector: {
+                                    select: {
+                                        options: [
+                                            { value: '', label: 'Default' },
+                                            { value: '0', label: '0' },
+                                            { value: '1', label: '1' },
+                                        ],
+                                    },
+                                },
+                            },
+                            {
+                                name: 'step_size',
+                                selector: {
+                                    select: {
+                                        options: [
+                                            { value: '', label: 'Default' },
+                                            { value: '0.5', label: '0.5' },
+                                            { value: '1', label: '1' },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        name: 'step_layout',
+                        selector: {
+                            select: {
+                                options: [
+                                    { value: '', label: 'Default' },
+                                    { value: 'column', label: 'column' },
+                                    { value: 'row', label: 'row' },
+                                ],
+                            },
+                        },
+                    },
+                ],
+            },
+        ];
+    }
     render() {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
         if (!this.hass)
             return b ``;
+        const formData = this._toFormData();
+        const schema = this._schema(formData);
         return b `
       <div class="card-config">
-        <div class="overall-config">
-          <div class="side-by-side">
-            <ha-entity-picker
-              label="Entity (required)"
-              .hass=${this.hass}
-              .value="${this.config.entity}"
-              .configValue=${'entity'}
-              .includeDomains=${includeDomains}
-              @change="${this.valueChanged}"
-              allow-custom-entity
-            ></ha-entity-picker>
-            <!-- AVA-AGENTONE v3.7: removed Current temperature entity picker.
-                 The climate entity already exposes current_temperature as an
-                 attribute; the override was redundant and cluttered the editor. -->
-          </div>
+        <ha-form
+          .hass=${this.hass}
+          .data=${formData}
+          .schema=${schema}
+          .computeLabel=${this._computeLabel}
+          @value-changed=${this._formValueChanged}
+        ></ha-form>
 
-          <!-- AVA-AGENTONE START: display options grid (was: overflowing inline toggles) -->
-          <div class="ava-editor-toggle-grid">
-            <ha-formfield label="Show header?">
-              <ha-switch
-                .checked=${this.config.header !== false}
-                @change=${this.toggleHeader}
-              ></ha-switch>
-            </ha-formfield>
-            <ha-formfield label="Show mode names?">
-              <ha-switch
-                .checked=${((_c = (_b = (_a = this.config) === null || _a === void 0 ? void 0 : _a.layout) === null || _b === void 0 ? void 0 : _b.mode) === null || _c === void 0 ? void 0 : _c.names) !== false}
-                .configValue="${'layout.mode.names'}"
-                @change=${this.valueChanged}
-              ></ha-switch>
-            </ha-formfield>
-            <ha-formfield label="Show mode icons?">
-              <ha-switch
-                .checked=${((_f = (_e = (_d = this.config) === null || _d === void 0 ? void 0 : _d.layout) === null || _e === void 0 ? void 0 : _e.mode) === null || _f === void 0 ? void 0 : _f.icons) !== false}
-                .configValue="${'layout.mode.icons'}"
-                @change=${this.valueChanged}
-              ></ha-switch>
-            </ha-formfield>
-            <ha-formfield label="Show mode headings?">
-              <ha-switch
-                .checked=${((_j = (_h = (_g = this.config) === null || _g === void 0 ? void 0 : _g.layout) === null || _h === void 0 ? void 0 : _h.mode) === null || _j === void 0 ? void 0 : _j.headings) !== false}
-                .configValue="${'layout.mode.headings'}"
-                @change=${this.valueChanged}
-              ></ha-switch>
-            </ha-formfield>
-          </div>
-          <!-- AVA-AGENTONE END -->
-
-          <!-- AVA-AGENTONE START: route ha-select dropdowns to _selectChanged
-               instead of valueChanged. valueChanged had a re-fire race and
-               broken dotted-path delete. -->
-          ${this.config.header !== false
-            ? b `
-                <div class="side-by-side">
-                  <ha-input
-                    label="Name (optional)"
-                    .value="${(_l = (_k = this.config.header) === null || _k === void 0 ? void 0 : _k.name) !== null && _l !== void 0 ? _l : ''}"
-                    .configValue="${'header.name'}"
-                    @input="${this.valueChanged}"
-                  ></ha-input>
-
-                  <ha-icon-picker
-                    label="Icon (optional)"
-                    .value="${(_m = this.config.header) === null || _m === void 0 ? void 0 : _m.icon}"
-                    .configValue=${'header.icon'}
-                    @value-changed=${this.valueChanged}
-                  ></ha-icon-picker>
-                </div>
-                <!-- AVA-AGENTONE v3.7: removed Toggle Entity + Toggle entity label row -->
-              `
-            : ''}
-
-          <!-- AVA-AGENTONE v3.7: removed Fallback Text and Unit input blocks.
-               Both remain configurable via YAML (fallback and unit keys). -->
-
-          <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
-               v3.5: switched from slotted <ha-list-item> children to .options property.
-               Post-Feb-2026 ha-select uses ha-dropdown internally and only fires
-               selected when ha-dropdown-item children dispatch wa-select. Slotted
-               ha-list-item renders visually via slot fallback but never wires the
-               event chain — selection silently does nothing. Using .options lets
-               ha-select render proper ha-dropdown-items itself. -->
-          <ha-expansion-panel
-            class="ava-advanced-panel"
-            outlined
-            header="Advanced"
-          >
-            <div class="side-by-side">
-              <ha-select
-                label="Decimals (optional)"
-                .configValue=${'decimals'}
-                .value=${(_p = (_o = this.config.decimals) === null || _o === void 0 ? void 0 : _o.toString()) !== null && _p !== void 0 ? _p : ''}
-                .options=${OptionsDecimals.map((v) => ({
-            value: v.toString(),
-            label: v.toString(),
-        }))}
-                @selected=${this._selectChanged}
-              ></ha-select>
-
-              <ha-select
-                label="Step Size (optional)"
-                .configValue=${'step_size'}
-                .value=${(_r = (_q = this.config.step_size) === null || _q === void 0 ? void 0 : _q.toString()) !== null && _r !== void 0 ? _r : ''}
-                .options=${OptionsStepSize.map((v) => ({
-            value: v.toString(),
-            label: v.toString(),
-        }))}
-                @selected=${this._selectChanged}
-              ></ha-select>
-            </div>
-
-            <div class="side-by-side">
-              <ha-select
-                label="Step Layout (optional)"
-                .configValue=${'layout.step'}
-                .value=${(_t = (_s = this.config.layout) === null || _s === void 0 ? void 0 : _s.step) !== null && _t !== void 0 ? _t : ''}
-                .options=${OptionsStepLayout.map((v) => ({
-            value: v,
-            label: v,
-        }))}
-                @selected=${this._selectChanged}
-              ></ha-select>
-            </div>
-          </ha-expansion-panel>
-          <!-- AVA-AGENTONE END -->
-
-          <!-- AVA-AGENTONE START: HVAC modes visibility section -->
-          ${this._renderHvacModes()}
-          <!-- AVA-AGENTONE END -->
-
-          <!-- AVA-AGENTONE v3.6: removed the upstream "Configuration Options"
-               footer block (it linked to upstream README and pushed users away
-               from this repo). -->
-        </div>
+        ${this._renderHvacModes()}
       </div>
     `;
     }
-    valueChanged(ev) {
-        if (!this.config || !this.hass) {
-            return;
-        }
-        const { target } = ev;
-        const copy = cloneDeep(this.config);
-        if (target.configValue) {
-            if (target.value === '') {
-                delete copy[target.configValue];
-            }
-            else {
-                setValue(copy, target.configValue, target.checked !== undefined ? target.checked : target.value);
-            }
-        }
-        fireEvent(this, 'config-changed', { config: copy });
-    }
-    toggleHeader(ev) {
-        // v3.5: Properly clone config rather than mutating this.config directly.
-        // The previous mutation pattern could leave Lit's change detection unsure
-        // whether to re-render, which may explain why the Name textfield didn't
-        // appear after toggling Show header on.
-        const copy = cloneDeep(this.config);
-        copy.header = ev.target.checked ? {} : false;
-        fireEvent(this, 'config-changed', { config: copy });
-    }
-    // AVA-AGENTONE START: HVAC modes editor methods + dropdown fix
-    // Auto-discovers the climate entity's hvac_modes and lets the user toggle each.
-    //
-    // IMPORTANT: upstream `control.hvac` is an ALLOW-LIST when populated, not a deny-list.
-    // As soon as ONE non-underscore key is present, any mode not explicitly truthy is
-    // filtered out at render time. So we must always write the FULL enumeration of
-    // available modes (each as `true` or `false`), or delete `control.hvac` entirely
-    // when every mode is visible.
-    // Dedicated handler for <ha-select> dropdowns.
-    //
-    // v3.4 diagnostic: HA's ha-select fires `selected` BEFORE its own .value
-    // property updates (see home-assistant/frontend src/components/ha-select.ts).
-    // The authoritative read path is ev.detail.value; ev.target.value is stale
-    // at this point. Earlier versions read target first and fell back to detail,
-    // which is why the editor silently dropped every selection.
-    //
-    // Also: numeric option values round-trip through HA as strings, so we coerce
-    // them back via the configValue→type map when needed.
-    _selectChanged(ev) {
-        var _a;
-        if (!this.config || !this.hass)
-            return;
-        const target = ev.target;
-        if (!(target === null || target === void 0 ? void 0 : target.configValue))
-            return;
-        // Authoritative: ev.detail.value (HA emits {value} in detail).
-        let newValue = (_a = ev.detail) === null || _a === void 0 ? void 0 : _a.value;
-        if (newValue === undefined)
-            newValue = target.value;
-        // Coerce known-numeric configValues so YAML stays type-correct.
-        const numericConfigValues = ['decimals', 'step_size'];
-        if (numericConfigValues.includes(target.configValue) &&
-            newValue !== undefined &&
-            newValue !== null &&
-            newValue !== '') {
-            const n = Number(newValue);
-            if (!Number.isNaN(n))
-                newValue = n;
-        }
-        const currentValue = this._readConfigPath(target.configValue);
-        if (currentValue === newValue)
-            return;
-        const copy = cloneDeep(this.config);
-        if (newValue == null || newValue === '') {
-            this._deleteConfigPath(copy, target.configValue);
-        }
-        else {
-            setValue(copy, target.configValue, newValue);
-        }
-        fireEvent(this, 'config-changed', { config: copy });
-    }
-    _readConfigPath(path) {
-        return path
-            .split('.')
-            .reduce((o, k) => (o == null ? undefined : o[k]), this.config);
-    }
-    _deleteConfigPath(obj, path) {
-        const parts = path.split('.');
-        let o = obj;
-        for (let i = 0; i < parts.length - 1; i++) {
-            if (!o[parts[i]])
-                return;
-            o = o[parts[i]];
-        }
-        delete o[parts[parts.length - 1]];
-    }
+    // ---- HVAC modes section (unchanged) ----
     _isHvacModeEnabled(mode) {
         var _a;
         const ctrl = (_a = this.config) === null || _a === void 0 ? void 0 : _a.control;
@@ -720,7 +681,6 @@ class SimpleThermostatEditor extends i$1 {
             return false;
         if (!hvac || typeof hvac !== 'object')
             return true;
-        // Allow-list semantics: if hvac has any non-meta key, unlisted modes are hidden.
         const hasNonMetaKeys = Object.keys(hvac).some((k) => !k.startsWith('_'));
         if (hasNonMetaKeys) {
             const value = hvac[mode];
@@ -731,25 +691,20 @@ class SimpleThermostatEditor extends i$1 {
             }
             return value !== false;
         }
-        // Empty / meta-only object → defaults apply, all modes visible.
         return true;
     }
     _hvacModeChanged(mode, checked) {
         var _a, _b, _c, _d;
         const copy = cloneDeep(this.config);
-        // Pull all available modes for this entity from hass state.
         const entityId = copy.entity;
         const stateObj = entityId ? (_b = (_a = this.hass) === null || _a === void 0 ? void 0 : _a.states) === null || _b === void 0 ? void 0 : _b[entityId] : null;
         const allModes = (_d = (_c = stateObj === null || stateObj === void 0 ? void 0 : stateObj.attributes) === null || _c === void 0 ? void 0 : _c.hvac_modes) !== null && _d !== void 0 ? _d : [];
-        // If we can't resolve the mode list (entity not loaded yet), bail.
         if (allModes.length === 0)
             return;
-        // Compute the visibility state for every mode AFTER this toggle.
         const newVisibility = {};
         for (const m of allModes) {
             newVisibility[m] = m === mode ? checked : this._isHvacModeEnabled(m);
         }
-        // Normalize `control` to object form. Editor only writes object form.
         if (!copy.control ||
             typeof copy.control !== 'object' ||
             Array.isArray(copy.control)) {
@@ -757,11 +712,9 @@ class SimpleThermostatEditor extends i$1 {
         }
         const allVisible = allModes.every((m) => newVisibility[m]);
         if (allVisible) {
-            // Every mode visible → drop the override so defaults apply.
             delete copy.control.hvac;
         }
         else {
-            // Allow-list mode: write the full enumeration so unlisted modes don't vanish.
             copy.control.hvac = {};
             for (const m of allModes) {
                 copy.control.hvac[m] = newVisibility[m];
@@ -773,7 +726,6 @@ class SimpleThermostatEditor extends i$1 {
         fireEvent(this, 'config-changed', { config: copy });
     }
     _formatModeName(mode) {
-        // "heat_cool" -> "Heat Cool", "fan_only" -> "Fan Only"
         return mode
             .replace(/_/g, ' ')
             .replace(/\b\w/g, (c) => c.toUpperCase());
