@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.5.0";
+var version = "3.6.0";
 
 /**
  * @license
@@ -454,7 +454,6 @@ const OptionsDecimals = [0, 1];
 const OptionsStepSize = [0.5, 1];
 const OptionsStepLayout = ['column', 'row'];
 const includeDomains = ['climate'];
-const GithubReadMe = 'https://github.com/Wheemer/simple-thermostat/blob/master/README.md';
 const stub = {
     header: {},
     layout: {
@@ -474,9 +473,6 @@ class SimpleThermostatEditor extends i$1 {
     }
     setConfig(config) {
         this.config = config || Object.assign({}, stub);
-    }
-    _openLink() {
-        window.open(GithubReadMe);
     }
     render() {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
@@ -536,19 +532,19 @@ class SimpleThermostatEditor extends i$1 {
           ${this.config.header !== false
             ? b `
                 <div class="side-by-side">
-                  <ha-textfield
+                  <ha-input
                     label="Name (optional)"
                     .value="${(_h = (_g = this.config.header) === null || _g === void 0 ? void 0 : _g.name) !== null && _h !== void 0 ? _h : ''}"
                     .configValue="${'header.name'}"
                     @input="${this.valueChanged}"
-                  ></ha-textfield>
+                  ></ha-input>
 
-                  <ha-icon-input
+                  <ha-icon-picker
                     label="Icon (optional)"
                     .value="${(_j = this.config.header) === null || _j === void 0 ? void 0 : _j.icon}"
                     .configValue=${'header.icon'}
                     @value-changed=${this.valueChanged}
-                  ></ha-icon-input>
+                  ></ha-icon-picker>
                 </div>
 
                 <div class="side-by-side">
@@ -561,32 +557,32 @@ class SimpleThermostatEditor extends i$1 {
                     allow-custom-entity
                   ></ha-entity-picker>
 
-                  <ha-textfield
+                  <ha-input
                     label="Toggle entity label"
                     .value="${(_r = (_q = (_p = (_o = this.config) === null || _o === void 0 ? void 0 : _o.header) === null || _p === void 0 ? void 0 : _p.toggle) === null || _q === void 0 ? void 0 : _q.name) !== null && _r !== void 0 ? _r : ''}"
                     .configValue="${'header.toggle.name'}"
                     @input="${this.valueChanged}"
-                  ></ha-textfield>
+                  ></ha-input>
                 </div>
               `
             : ''}
 
           <div class="side-by-side">
-            <ha-textfield
+            <ha-input
               label="Fallback Text (optional)"
               .value="${(_s = this.config.fallback) !== null && _s !== void 0 ? _s : ''}"
               .configValue="${'fallback'}"
               @input="${this.valueChanged}"
-            ></ha-textfield>
+            ></ha-input>
           </div>
 
           <div class="side-by-side">
-            <ha-textfield
+            <ha-input
               label="Unit (optional)"
               .value="${(_t = this.config.unit) !== null && _t !== void 0 ? _t : ''}"
               .configValue="${'unit'}"
               @input="${this.valueChanged}"
-            ></ha-textfield>
+            ></ha-input>
           </div>
 
           <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
@@ -644,14 +640,9 @@ class SimpleThermostatEditor extends i$1 {
           ${this._renderHvacModes()}
           <!-- AVA-AGENTONE END -->
 
-          <div class="side-by-side">
-            <ha-button @click=${this._openLink}>
-              Configuration Options
-            </ha-button>
-
-            Settings for label, control, sensors, faults and hiding UI elements
-            can only be configured in the code editor
-          </div>
+          <!-- AVA-AGENTONE v3.6: removed the upstream "Configuration Options"
+               footer block (it linked to upstream README and pushed users away
+               from this repo). -->
         </div>
       </div>
     `;
@@ -2030,11 +2021,14 @@ class SimpleThermostat extends i$1 {
         return 3;
     }
     getUnit() {
-        var _a, _b, _c, _d;
+        var _a;
         if (['boolean', 'string'].includes(typeof this.config.unit)) {
             return (_a = this.config) === null || _a === void 0 ? void 0 : _a.unit;
         }
-        return (_d = (_c = (_b = this._hass.config) === null || _b === void 0 ? void 0 : _b.unit_system) === null || _c === void 0 ? void 0 : _c.temperature) !== null && _d !== void 0 ? _d : false;
+        // AVA-AGENTONE v3.6: default to hiding the °C/°F suffix on the setpoint.
+        // The big setpoint number looks cleaner without the unit suffix. Users
+        // who want the unit back can set `unit: true` or `unit: "°C"` in YAML.
+        return false;
     }
 }
 __decorate([

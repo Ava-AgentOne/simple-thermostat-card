@@ -16,7 +16,6 @@ export default class SimpleThermostatEditor extends LitElement {
         };
     };
     setConfig(config: any): void;
-    _openLink(): void;
     render(): import("lit-html").TemplateResult<1>;
     valueChanged(ev: any): void;
     toggleHeader(ev: any): void;
