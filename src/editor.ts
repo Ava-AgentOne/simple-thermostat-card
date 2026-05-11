@@ -209,6 +209,10 @@ export default class SimpleThermostatEditor extends LitElement {
             </ha-select>
           </div>
 
+          <!-- AVA-AGENTONE START: HVAC modes visibility section -->
+          ${this._renderHvacModes()}
+          <!-- AVA-AGENTONE END -->
+
           <div class="side-by-side">
             <ha-button @click=${this._openLink}>
               Configuration Options
@@ -246,4 +250,92 @@ export default class SimpleThermostatEditor extends LitElement {
     this.config.header = ev.target.checked ? {} : false
     fireEvent(this, 'config-changed', { config: this.config })
   }
+
+  // AVA-AGENTONE START: HVAC modes editor methods
+  // Reads available hvac_modes from the selected climate entity and lets the
+  // user toggle each one on/off. Writes to `control.hvac.<mode>: false` on hide,
+  // deletes the key on show. Cleans up empty parent objects so YAML stays tidy.
+
+  _isHvacModeEnabled(mode: string): boolean {
+    const ctrl: any = this.config?.control
+    if (ctrl === false) return false
+    if (!ctrl || typeof ctrl !== 'object' || Array.isArray(ctrl)) return true
+    const hvac = ctrl.hvac
+    if (hvac === false) return false
+    if (!hvac || typeof hvac !== 'object') return true
+    return hvac[mode] !== false
+  }
+
+  _hvacModeChanged(mode: string, checked: boolean) {
+    const copy: any = cloneDeep(this.config)
+
+    // Normalize `control` to object form. The editor only writes object form;
+    // if the user had `control: false` or a string[] array, we replace with {}.
+    if (
+      !copy.control ||
+      typeof copy.control !== 'object' ||
+      Array.isArray(copy.control)
+    ) {
+      copy.control = {}
+    }
+    if (!copy.control.hvac || typeof copy.control.hvac !== 'object') {
+      copy.control.hvac = {}
+    }
+
+    if (checked) {
+      delete copy.control.hvac[mode]
+    } else {
+      copy.control.hvac[mode] = false
+    }
+
+    // Tidy: remove empty objects so we don't leave `control: {}` cruft in YAML.
+    if (Object.keys(copy.control.hvac).length === 0) {
+      delete copy.control.hvac
+    }
+    if (Object.keys(copy.control).length === 0) {
+      delete copy.control
+    }
+
+    fireEvent(this, 'config-changed', { config: copy })
+  }
+
+  _formatModeName(mode: string): string {
+    // "heat_cool" -> "Heat Cool", "fan_only" -> "Fan Only"
+    return mode
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  }
+
+  _renderHvacModes() {
+    const entityId = this.config?.entity
+    const stateObj = entityId ? this.hass.states[entityId] : null
+    const modes: string[] = stateObj?.attributes?.hvac_modes ?? []
+
+    if (modes.length === 0) {
+      return html``
+    }
+
+    return html`
+      <div class="ava-editor-section">
+        <div class="ava-editor-section-title">HVAC modes</div>
+        <div class="ava-editor-section-subtitle">
+          Toggle off any mode you want to hide from the card buttons.
+        </div>
+        <div class="ava-mode-grid">
+          ${modes.map(
+            (mode) => html`
+              <ha-formfield label="${this._formatModeName(mode)}">
+                <ha-switch
+                  .checked=${this._isHvacModeEnabled(mode)}
+                  @change=${(e: any) =>
+                    this._hvacModeChanged(mode, e.target.checked)}
+                ></ha-switch>
+              </ha-formfield>
+            `
+          )}
+        </div>
+      </div>
+    `
+  }
+  // AVA-AGENTONE END
 }

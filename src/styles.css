@@ -267,3 +267,27 @@ header {
   flex: 1;
   padding-right: 4px;
 }
+
+/* AVA-AGENTONE START: editor HVAC modes section */
+.ava-editor-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider-color, rgba(0, 0, 0, 0.12));
+}
+.ava-editor-section-title {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--primary-text-color);
+  margin-bottom: 4px;
+}
+.ava-editor-section-subtitle {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-bottom: 12px;
+}
+.ava-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 4px 12px;
+}
+/* AVA-AGENTONE END */
