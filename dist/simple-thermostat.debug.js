@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.3.0";
+var version = "3.4.0";
 
 /**
  * @license
@@ -411,6 +411,18 @@ header {
   }
 }
 /* AVA-AGENTONE END */
+
+/* AVA-AGENTONE START v3.4: Advanced expansion panel in editor */
+.ava-advanced-panel {
+  display: block;
+  margin-top: 16px;
+  --expansion-panel-content-padding: 0 8px;
+  --expansion-panel-summary-padding: 0 8px;
+}
+.ava-advanced-panel .side-by-side {
+  margin-top: 8px;
+}
+/* AVA-AGENTONE END v3.4 */
 `;
 styleInject(css_248z);
 
@@ -467,7 +479,7 @@ class SimpleThermostatEditor extends i$1 {
         window.open(GithubReadMe);
     }
     render() {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
         if (!this.hass)
             return b ``;
         return b `
@@ -515,13 +527,6 @@ class SimpleThermostatEditor extends i$1 {
                 @change=${this.valueChanged}
               ></ha-switch>
             </ha-formfield>
-            <ha-formfield label="Show mode headings?">
-              <ha-switch
-                .checked=${((_j = (_h = (_g = this.config) === null || _g === void 0 ? void 0 : _g.layout) === null || _h === void 0 ? void 0 : _h.mode) === null || _j === void 0 ? void 0 : _j.headings) !== false}
-                .configValue="${'layout.mode.headings'}"
-                @change=${this.valueChanged}
-              ></ha-switch>
-            </ha-formfield>
           </div>
           <!-- AVA-AGENTONE END -->
 
@@ -533,14 +538,14 @@ class SimpleThermostatEditor extends i$1 {
                 <div class="side-by-side">
                   <ha-textfield
                     label="Name (optional)"
-                    .value="${(_l = (_k = this.config.header) === null || _k === void 0 ? void 0 : _k.name) !== null && _l !== void 0 ? _l : ''}"
+                    .value="${(_h = (_g = this.config.header) === null || _g === void 0 ? void 0 : _g.name) !== null && _h !== void 0 ? _h : ''}"
                     .configValue="${'header.name'}"
                     @input="${this.valueChanged}"
                   ></ha-textfield>
 
                   <ha-icon-input
                     label="Icon (optional)"
-                    .value="${(_m = this.config.header) === null || _m === void 0 ? void 0 : _m.icon}"
+                    .value="${(_j = this.config.header) === null || _j === void 0 ? void 0 : _j.icon}"
                     .configValue=${'header.icon'}
                     @value-changed=${this.valueChanged}
                   ></ha-icon-input>
@@ -550,7 +555,7 @@ class SimpleThermostatEditor extends i$1 {
                   <ha-entity-picker
                     label="Toggle Entity (optional)"
                     .hass=${this.hass}
-                    .value="${(_q = (_p = (_o = this.config) === null || _o === void 0 ? void 0 : _o.header) === null || _p === void 0 ? void 0 : _p.toggle) === null || _q === void 0 ? void 0 : _q.entity}"
+                    .value="${(_m = (_l = (_k = this.config) === null || _k === void 0 ? void 0 : _k.header) === null || _l === void 0 ? void 0 : _l.toggle) === null || _m === void 0 ? void 0 : _m.entity}"
                     .configValue=${'header.toggle.entity'}
                     @change="${this.valueChanged}"
                     allow-custom-entity
@@ -558,7 +563,7 @@ class SimpleThermostatEditor extends i$1 {
 
                   <ha-textfield
                     label="Toggle entity label"
-                    .value="${(_u = (_t = (_s = (_r = this.config) === null || _r === void 0 ? void 0 : _r.header) === null || _s === void 0 ? void 0 : _s.toggle) === null || _t === void 0 ? void 0 : _t.name) !== null && _u !== void 0 ? _u : ''}"
+                    .value="${(_r = (_q = (_p = (_o = this.config) === null || _o === void 0 ? void 0 : _o.header) === null || _p === void 0 ? void 0 : _p.toggle) === null || _q === void 0 ? void 0 : _q.name) !== null && _r !== void 0 ? _r : ''}"
                     .configValue="${'header.toggle.name'}"
                     @input="${this.valueChanged}"
                   ></ha-textfield>
@@ -569,52 +574,66 @@ class SimpleThermostatEditor extends i$1 {
           <div class="side-by-side">
             <ha-textfield
               label="Fallback Text (optional)"
-              .value="${(_v = this.config.fallback) !== null && _v !== void 0 ? _v : ''}"
+              .value="${(_s = this.config.fallback) !== null && _s !== void 0 ? _s : ''}"
               .configValue="${'fallback'}"
               @input="${this.valueChanged}"
             ></ha-textfield>
           </div>
 
           <div class="side-by-side">
-            <ha-select
-              label="Decimals (optional)"
-              .configValue=${'decimals'}
-              .value="${(_x = (_w = this.config.decimals) === null || _w === void 0 ? void 0 : _w.toString()) !== null && _x !== void 0 ? _x : ''}"
-              @selected="${this._selectChanged}"
-              @closed="${(e) => e.stopPropagation()}"
-            >
-              ${Object.values(OptionsDecimals).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
-            </ha-select>
-
             <ha-textfield
               label="Unit (optional)"
-              .value="${(_y = this.config.unit) !== null && _y !== void 0 ? _y : ''}"
+              .value="${(_t = this.config.unit) !== null && _t !== void 0 ? _t : ''}"
               .configValue="${'unit'}"
               @input="${this.valueChanged}"
             ></ha-textfield>
           </div>
 
-          <div class="side-by-side">
-            <ha-select
-              label="Step Layout (optional)"
-              .configValue=${'layout.step'}
-              .value="${(_0 = (_z = this.config.layout) === null || _z === void 0 ? void 0 : _z.step) !== null && _0 !== void 0 ? _0 : ''}"
-              @selected="${this._selectChanged}"
-              @closed="${(e) => e.stopPropagation()}"
-            >
-              ${Object.values(OptionsStepLayout).map((item) => b `<ha-list-item .value="${item}">${item}</ha-list-item>`)}
-            </ha-select>
+          <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
+               Per v3.4 spec: these are reachable but hidden by default to declutter the
+               editor. Step Layout was explicitly kept; Decimals and Step Size are kept
+               here too for completeness (rather than removed entirely) so users can still
+               adjust them without dropping to YAML. -->
+          <ha-expansion-panel
+            class="ava-advanced-panel"
+            outlined
+            header="Advanced"
+          >
+            <div class="side-by-side">
+              <ha-select
+                label="Decimals (optional)"
+                .configValue=${'decimals'}
+                .value="${(_v = (_u = this.config.decimals) === null || _u === void 0 ? void 0 : _u.toString()) !== null && _v !== void 0 ? _v : ''}"
+                @selected="${this._selectChanged}"
+                @closed="${(e) => e.stopPropagation()}"
+              >
+                ${Object.values(OptionsDecimals).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
+              </ha-select>
 
-            <ha-select
-              label="Step Size (optional)"
-              .configValue=${'step_size'}
-              .value="${(_2 = (_1 = this.config.step_size) === null || _1 === void 0 ? void 0 : _1.toString()) !== null && _2 !== void 0 ? _2 : ''}"
-              @selected="${this._selectChanged}"
-              @closed="${(e) => e.stopPropagation()}"
-            >
-              ${Object.values(OptionsStepSize).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
-            </ha-select>
-          </div>
+              <ha-select
+                label="Step Size (optional)"
+                .configValue=${'step_size'}
+                .value="${(_x = (_w = this.config.step_size) === null || _w === void 0 ? void 0 : _w.toString()) !== null && _x !== void 0 ? _x : ''}"
+                @selected="${this._selectChanged}"
+                @closed="${(e) => e.stopPropagation()}"
+              >
+                ${Object.values(OptionsStepSize).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
+              </ha-select>
+            </div>
+
+            <div class="side-by-side">
+              <ha-select
+                label="Step Layout (optional)"
+                .configValue=${'layout.step'}
+                .value="${(_z = (_y = this.config.layout) === null || _y === void 0 ? void 0 : _y.step) !== null && _z !== void 0 ? _z : ''}"
+                @selected="${this._selectChanged}"
+                @closed="${(e) => e.stopPropagation()}"
+              >
+                ${Object.values(OptionsStepLayout).map((item) => b `<ha-list-item .value="${item}">${item}</ha-list-item>`)}
+              </ha-select>
+            </div>
+          </ha-expansion-panel>
+          <!-- AVA-AGENTONE END -->
 
           <!-- AVA-AGENTONE START: HVAC modes visibility section -->
           ${this._renderHvacModes()}
@@ -660,25 +679,39 @@ class SimpleThermostatEditor extends i$1 {
     // filtered out at render time. So we must always write the FULL enumeration of
     // available modes (each as `true` or `false`), or delete `control.hvac` entirely
     // when every mode is visible.
-    // Dedicated handler for <ha-select> dropdowns (Decimals / Step Layout / Step Size).
-    // The shared `valueChanged` had two bugs that broke these:
-    //   1. ha-select's `selected` event re-fires when HA pushes config back into the
-    //      editor, which would overwrite the user's choice with stale state.
-    //   2. `delete copy[target.configValue]` doesn't handle dotted paths like
-    //      'layout.step' — it deletes a literal key, no-op.
-    // This handler guards against the re-fire by comparing the new value to what's
-    // already in config, and walks the path for delete.
+    // Dedicated handler for <ha-select> dropdowns.
+    //
+    // v3.4 diagnostic: HA's ha-select fires `selected` BEFORE its own .value
+    // property updates (see home-assistant/frontend src/components/ha-select.ts).
+    // The authoritative read path is ev.detail.value; ev.target.value is stale
+    // at this point. Earlier versions read target first and fell back to detail,
+    // which is why the editor silently dropped every selection.
+    //
+    // Also: numeric option values round-trip through HA as strings, so we coerce
+    // them back via the configValue→type map when needed.
     _selectChanged(ev) {
-        var _a, _b;
+        var _a;
         if (!this.config || !this.hass)
             return;
         const target = ev.target;
         if (!(target === null || target === void 0 ? void 0 : target.configValue))
             return;
-        const newValue = (_a = target.value) !== null && _a !== void 0 ? _a : (_b = ev.detail) === null || _b === void 0 ? void 0 : _b.value;
+        // Authoritative: ev.detail.value (HA emits {value} in detail).
+        let newValue = (_a = ev.detail) === null || _a === void 0 ? void 0 : _a.value;
+        if (newValue === undefined)
+            newValue = target.value;
+        // Coerce known-numeric configValues so YAML stays type-correct.
+        const numericConfigValues = ['decimals', 'step_size'];
+        if (numericConfigValues.includes(target.configValue) &&
+            newValue !== undefined &&
+            newValue !== null &&
+            newValue !== '') {
+            const n = Number(newValue);
+            if (!Number.isNaN(n))
+                newValue = n;
+        }
         const currentValue = this._readConfigPath(target.configValue);
-        const normalize = (v) => (v == null ? '' : String(v));
-        if (normalize(currentValue) === normalize(newValue))
+        if (currentValue === newValue)
             return;
         const copy = cloneDeep(this.config);
         if (newValue == null || newValue === '') {
