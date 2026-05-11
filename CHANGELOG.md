@@ -2,6 +2,26 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.6.0] - 2026-05-11
+
+### Fixed — Editor: missing Name and Icon fields
+- The Name (optional) and Icon (optional) fields in the header section were invisible because they used HA element names that no longer exist in HA 2026.x.
+- `<ha-textfield>` was removed from HA frontend; replaced with `<ha-input>` (4 places: Name, Toggle entity label, Fallback Text, Unit).
+- `<ha-icon-input>` was removed from HA frontend; replaced with `<ha-icon-picker>` (1 place: Icon).
+- Both replacements have identical `.label` / `.value` props and event surface, so the migration is a drop-in.
+- Verified by reading `home-assistant/frontend` tag `20260429.3` `src/components/` directory listing.
+
+### Changed — Card: setpoint unit hidden by default
+- The big setpoint number no longer shows `°C` / `°F` suffix by default. The unit was visually small and out of place next to the large number.
+- Users who want the unit back can set `unit: true` (uses HA's locale unit) or `unit: "°C"` (literal string) in card YAML.
+
+### Removed — "Configuration Options" footer
+- The button + label block at the bottom of the editor that linked to upstream Wheemer's README is gone. Also removed dead `_openLink()` method and `GithubReadMe` constant.
+
+### Notes
+- v3.6 doesn't touch the dropdowns (v3.5 fix stands) or the HVAC modes editor (v3.2 stands).
+- All AVA-AGENTONE markers updated where applicable.
+
 ## [v3.5.0] - 2026-05-11
 
 ### Fixed — Dropdowns (third attempt, properly diagnosed)

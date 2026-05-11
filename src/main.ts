@@ -579,6 +579,9 @@ export default class SimpleThermostat extends LitElement {
     if (['boolean', 'string'].includes(typeof this.config.unit)) {
       return this.config?.unit
     }
-    return this._hass.config?.unit_system?.temperature ?? false
+    // AVA-AGENTONE v3.6: default to hiding the °C/°F suffix on the setpoint.
+    // The big setpoint number looks cleaner without the unit suffix. Users
+    // who want the unit back can set `unit: true` or `unit: "°C"` in YAML.
+    return false
   }
 }

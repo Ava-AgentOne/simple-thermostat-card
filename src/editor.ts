@@ -25,9 +25,6 @@ const OptionsStepLayout = ['column', 'row']
 
 const includeDomains = ['climate']
 
-const GithubReadMe =
-  'https://github.com/Wheemer/simple-thermostat/blob/master/README.md'
-
 const stub = {
   header: {},
   layout: {
@@ -55,10 +52,6 @@ export default class SimpleThermostatEditor extends LitElement {
 
   setConfig(config) {
     this.config = config || { ...stub }
-  }
-
-  _openLink() {
-    window.open(GithubReadMe)
   }
 
   render() {
@@ -118,19 +111,19 @@ export default class SimpleThermostatEditor extends LitElement {
           ${this.config.header !== false
             ? html`
                 <div class="side-by-side">
-                  <ha-textfield
+                  <ha-input
                     label="Name (optional)"
                     .value="${this.config.header?.name ?? ''}"
                     .configValue="${'header.name'}"
                     @input="${this.valueChanged}"
-                  ></ha-textfield>
+                  ></ha-input>
 
-                  <ha-icon-input
+                  <ha-icon-picker
                     label="Icon (optional)"
                     .value="${this.config.header?.icon}"
                     .configValue=${'header.icon'}
                     @value-changed=${this.valueChanged}
-                  ></ha-icon-input>
+                  ></ha-icon-picker>
                 </div>
 
                 <div class="side-by-side">
@@ -143,32 +136,32 @@ export default class SimpleThermostatEditor extends LitElement {
                     allow-custom-entity
                   ></ha-entity-picker>
 
-                  <ha-textfield
+                  <ha-input
                     label="Toggle entity label"
                     .value="${this.config?.header?.toggle?.name ?? ''}"
                     .configValue="${'header.toggle.name'}"
                     @input="${this.valueChanged}"
-                  ></ha-textfield>
+                  ></ha-input>
                 </div>
               `
             : ''}
 
           <div class="side-by-side">
-            <ha-textfield
+            <ha-input
               label="Fallback Text (optional)"
               .value="${this.config.fallback ?? ''}"
               .configValue="${'fallback'}"
               @input="${this.valueChanged}"
-            ></ha-textfield>
+            ></ha-input>
           </div>
 
           <div class="side-by-side">
-            <ha-textfield
+            <ha-input
               label="Unit (optional)"
               .value="${this.config.unit ?? ''}"
               .configValue="${'unit'}"
               @input="${this.valueChanged}"
-            ></ha-textfield>
+            ></ha-input>
           </div>
 
           <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
@@ -226,14 +219,9 @@ export default class SimpleThermostatEditor extends LitElement {
           ${this._renderHvacModes()}
           <!-- AVA-AGENTONE END -->
 
-          <div class="side-by-side">
-            <ha-button @click=${this._openLink}>
-              Configuration Options
-            </ha-button>
-
-            Settings for label, control, sensors, faults and hiding UI elements
-            can only be configured in the code editor
-          </div>
+          <!-- AVA-AGENTONE v3.6: removed the upstream "Configuration Options"
+               footer block (it linked to upstream README and pushed users away
+               from this repo). -->
         </div>
       </div>
     `
