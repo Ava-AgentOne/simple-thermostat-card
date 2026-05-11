@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.8.1";
+var version = "3.9.0";
 
 /**
  * @license
