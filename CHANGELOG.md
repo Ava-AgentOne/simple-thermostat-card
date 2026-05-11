@@ -2,6 +2,33 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.8.0] - 2026-05-11
+
+### Changed — Editor rewritten on `<ha-form>` with selectors
+
+The visual editor no longer assembles individual `<ha-entity-picker>`, `<ha-input>`, `<ha-icon-picker>`, `<ha-select>`, `<ha-formfield>`, `<ha-switch>`, `<ha-expansion-panel>` elements by hand. It now uses `<ha-form>` with a declarative schema of selectors, the same pattern HA's own card editors (e.g. tile-card-editor) use.
+
+**Why**: HA has been progressively replacing element-level web components with a new generation built on webawesome internals (Feb 2026 ha-select refactor, removal of ha-textfield, removal of ha-icon-input, ha-entity-picker switching from `change` event to `value-changed`). Each refactor broke a different piece of our editor. Releases v3.3 through v3.7 each fixed one element-level issue and shipped with another lurking, because the underlying API was a moving target.
+
+`ha-form` is the stable declarative API. Selectors (`{ entity: { domain: 'climate' } }`, `{ boolean: {} }`, `{ icon: {} }`, `{ select: { options: [...] } }`, `{ text: {} }`) are implemented and maintained by HA. When HA refactors internals, ha-form keeps rendering them correctly.
+
+### Specifically fixed
+- Entity picker is back (was invisible in v3.7 after ha-entity-picker's API changed in HA 2026.x).
+- All editor controls now use HA's current rendering pipeline; future HA component refactors are absorbed by ha-form.
+
+### What changed structurally
+- `src/editor.ts` shrunk from 407 to 336 lines. Bundle dropped 3.6 KB.
+- Removed: per-element `valueChanged`, `_selectChanged`, `toggleHeader`, `setValue`, `_readConfigPath`, `_deleteConfigPath`. All replaced by a single data adapter (`_toFormData` / `_fromFormData`) + one event handler (`_formValueChanged`).
+- HVAC modes section is unchanged — it stays as a custom render below the form because its per-entity dynamic discovery doesn't fit ha-form's static schema model.
+
+### Tradeoffs
+- Editor layout (spacing, expansion-panel visuals) is now whatever HA renders. The old hand-tuned `.side-by-side` / `.ava-editor-toggle-grid` / `.ava-advanced-panel` CSS for the editor is no longer needed (the rules remain in `styles.css` but only `.ava-editor-section` / `.ava-mode-grid` for the HVAC section are still active).
+- The previous "Show header?" toggle revealed Name/Icon inline; now ha-form recomputes the schema on each render to add/remove those fields when the toggle flips. Same visible behavior, different mechanism.
+- Decimals / Step Size dropdowns now include an explicit "Default" option (empty string) to clear the value. Same data: an empty selection deletes the YAML key.
+
+### Postmortem
+This thread shipped seven release attempts before reaching a stable architecture. v3.2 was clean (HVAC editor). v3.3–v3.5 chased an event-handling theory that didn't match HA's actual ha-select implementation. v3.6 migrated some elements but missed others. v3.7 introduced an unrelated unit-display regression. v3.8 steps back and uses HA's declarative form API instead of wiring elements directly. The refactor took less code than the cumulative fixes.
+
 ## [v3.7.0] - 2026-05-11
 
 ### Fixed — Current temperature lost its unit (v3.6 regression)
