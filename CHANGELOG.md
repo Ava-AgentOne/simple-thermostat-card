@@ -2,6 +2,28 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.7.0] - 2026-05-11
+
+### Fixed — Current temperature lost its unit (v3.6 regression)
+- v3.6 changed `getUnit()` to return `false` by default to hide the °C from the setpoint. But `getUnit()` is consumed by BOTH the setpoint render and the info row (Currently: 32.5°C), so the change accidentally stripped the unit from the current-temp display too.
+- Reverted `getUnit()` to upstream behavior. Setpoint unit is now hidden via a targeted conditional at the setpoint render site only.
+- Restoring the setpoint unit suffix: set `show_setpoint_unit: true` in card YAML.
+
+### Restored — "Show mode headings?" toggle
+- Brought back the toggle that was removed in v3.4. The mode-headings default is `true` upstream, and removing only the toggle (not the default) meant headings were always on. Toggle is back next to "Show mode icons?".
+
+### Removed from editor UI
+Five fields that cluttered the visual editor are gone (still configurable in YAML):
+- Current temperature entity (redundant — climate entity already exposes `current_temperature` as an attribute)
+- Toggle Entity (header.toggle.entity)
+- Toggle entity label (header.toggle.name)
+- Fallback Text (fallback)
+- Unit (unit)
+
+### Notes
+- TypeScript: added `show_setpoint_unit?: boolean` to `CardConfig`.
+- All other v3.6 fixes (ha-input/ha-icon-picker migration, no Configuration Options footer, no Wheemer link) remain in place.
+
 ## [v3.6.0] - 2026-05-11
 
 ### Fixed — Editor: missing Name and Icon fields

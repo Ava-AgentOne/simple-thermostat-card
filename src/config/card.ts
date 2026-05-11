@@ -63,6 +63,9 @@ interface CardConfig {
   variables?: LooseObject
   // AVA-AGENTONE: CSS passthrough — see render() in main.ts for usage
   style?: Record<string, string>
+  // AVA-AGENTONE v3.7: opt-in to show the °C/°F suffix on the setpoint number.
+  // Default false (suffix hidden). Set true in YAML to restore upstream behavior.
+  show_setpoint_unit?: boolean
   layout?: {
     mode: {
       names: boolean

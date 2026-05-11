@@ -70,14 +70,9 @@ export default class SimpleThermostatEditor extends LitElement {
               @change="${this.valueChanged}"
               allow-custom-entity
             ></ha-entity-picker>
-            <ha-entity-picker
-              label="Current temperature entity (optional)"
-              .hass=${this.hass}
-              .value="${this.config.current_temperature_entity}"
-              .configValue=${'current_temperature_entity'}
-              @change="${this.valueChanged}"
-              allow-custom-entity
-            ></ha-entity-picker>
+            <!-- AVA-AGENTONE v3.7: removed Current temperature entity picker.
+                 The climate entity already exposes current_temperature as an
+                 attribute; the override was redundant and cluttered the editor. -->
           </div>
 
           <!-- AVA-AGENTONE START: display options grid (was: overflowing inline toggles) -->
@@ -99,6 +94,13 @@ export default class SimpleThermostatEditor extends LitElement {
               <ha-switch
                 .checked=${this.config?.layout?.mode?.icons !== false}
                 .configValue="${'layout.mode.icons'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode headings?">
+              <ha-switch
+                .checked=${this.config?.layout?.mode?.headings !== false}
+                .configValue="${'layout.mode.headings'}"
                 @change=${this.valueChanged}
               ></ha-switch>
             </ha-formfield>
@@ -125,44 +127,12 @@ export default class SimpleThermostatEditor extends LitElement {
                     @value-changed=${this.valueChanged}
                   ></ha-icon-picker>
                 </div>
-
-                <div class="side-by-side">
-                  <ha-entity-picker
-                    label="Toggle Entity (optional)"
-                    .hass=${this.hass}
-                    .value="${this.config?.header?.toggle?.entity}"
-                    .configValue=${'header.toggle.entity'}
-                    @change="${this.valueChanged}"
-                    allow-custom-entity
-                  ></ha-entity-picker>
-
-                  <ha-input
-                    label="Toggle entity label"
-                    .value="${this.config?.header?.toggle?.name ?? ''}"
-                    .configValue="${'header.toggle.name'}"
-                    @input="${this.valueChanged}"
-                  ></ha-input>
-                </div>
+                <!-- AVA-AGENTONE v3.7: removed Toggle Entity + Toggle entity label row -->
               `
             : ''}
 
-          <div class="side-by-side">
-            <ha-input
-              label="Fallback Text (optional)"
-              .value="${this.config.fallback ?? ''}"
-              .configValue="${'fallback'}"
-              @input="${this.valueChanged}"
-            ></ha-input>
-          </div>
-
-          <div class="side-by-side">
-            <ha-input
-              label="Unit (optional)"
-              .value="${this.config.unit ?? ''}"
-              .configValue="${'unit'}"
-              @input="${this.valueChanged}"
-            ></ha-input>
-          </div>
+          <!-- AVA-AGENTONE v3.7: removed Fallback Text and Unit input blocks.
+               Both remain configurable via YAML (fallback and unit keys). -->
 
           <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
                v3.5: switched from slotted <ha-list-item> children to .options property.

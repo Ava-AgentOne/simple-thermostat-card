@@ -488,7 +488,10 @@ export default class SimpleThermostat extends LitElement {
                         : config.fallback,
                     locale: this._hass.locale,
                   })}
-                  ${showUnit
+                  ${/* AVA-AGENTONE v3.7: setpoint unit hidden by default
+                       (was accidentally hiding current temp unit too in v3.6).
+                       To re-enable, set `show_setpoint_unit: true` in YAML. */
+                  showUnit && this.config.show_setpoint_unit === true
                     ? html`<span class="current--unit">${unit}</span>`
                     : nothing}
                 </h3>
@@ -579,9 +582,6 @@ export default class SimpleThermostat extends LitElement {
     if (['boolean', 'string'].includes(typeof this.config.unit)) {
       return this.config?.unit
     }
-    // AVA-AGENTONE v3.6: default to hiding the °C/°F suffix on the setpoint.
-    // The big setpoint number looks cleaner without the unit suffix. Users
-    // who want the unit back can set `unit: true` or `unit: "°C"` in YAML.
-    return false
+    return this._hass.config?.unit_system?.temperature ?? false
   }
 }
