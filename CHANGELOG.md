@@ -2,6 +2,32 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.3.0] - 2026-05-11
+
+### Fixed — Editor dropdowns
+- **Decimals / Step Layout / Step Size dropdowns now save correctly.** They were silently reverting to the previous value on every open. Root cause: ha-select's `selected` event re-fires when HA pushes the config back into the editor, and the shared `valueChanged` handler had no guard against the re-fire — the second fire would race with the user's selection. Also fixed a latent bug where clearing a nested-path value (e.g. `layout.step`) tried to delete a literal `"layout.step"` key.
+- New `_selectChanged` method dedicated to ha-select with a re-fire guard (compares new value to current) and dotted-path delete.
+
+### Added — Editor: layout cleanup
+- The four "Show ___" toggles are now wrapped in a responsive grid (`.ava-editor-toggle-grid`) so they stop overflowing into the Name / Icon fields on narrow editor panels. The previously buried `Name (optional)` field is discoverable again.
+
+### Added — Card: style passthrough (CSS var override)
+- New top-level `style:` config key on the card. Any key/value pairs you put there are emitted as inline style on the `<ha-card>` element, so you can override CSS variables (or set plain CSS properties) without needing the `card-mod` integration:
+  ```yaml
+  type: custom:simple-thermostat
+  entity: climate.majles_ac
+  style:
+    --st-setpoint-font-size: 56px
+    --st-setpoint-font-weight: bold
+  ```
+- Two new CSS vars wired into the existing setpoint style for the common "make my target temperature bigger / bolder" case:
+  - `--st-setpoint-font-size` (defaults to upstream's `--st-font-size-l` / `--st-font-size-xl` cascade)
+  - `--st-setpoint-font-weight` (defaults to `400`)
+- All other upstream CSS vars (`--st-font-size-title`, mode colors, etc.) remain available through the same `style:` key.
+
+### Notes on upstream divergence
+- This release touches `src/main.ts` (style passthrough render block), `src/config/card.ts` (new `style` field on `CardConfig`), `src/editor.ts` (dropdown handler + toggle grid wrap), and `src/styles.css` (toggle-grid + setpoint vars). All additions are wrapped in `AVA-AGENTONE` markers to keep future upstream merges tractable.
+
 ## [v3.2.1] - 2026-05-11
 
 ### Fixed

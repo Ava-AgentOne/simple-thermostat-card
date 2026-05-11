@@ -87,34 +87,41 @@ export default class SimpleThermostatEditor extends LitElement {
             ></ha-entity-picker>
           </div>
 
-          <ha-formfield label="Show header?">
-            <ha-switch
-              .checked=${this.config.header !== false}
-              @change=${this.toggleHeader}
-            ></ha-switch>
-          </ha-formfield>
-          <ha-formfield label="Show mode names?">
-            <ha-switch
-              .checked=${this.config?.layout?.mode?.names !== false}
-              .configValue="${'layout.mode.names'}"
-              @change=${this.valueChanged}
-            ></ha-switch>
-          </ha-formfield>
-          <ha-formfield label="Show mode icons?">
-            <ha-switch
-              .checked=${this.config?.layout?.mode?.icons !== false}
-              .configValue="${'layout.mode.icons'}"
-              @change=${this.valueChanged}
-            ></ha-switch>
-          </ha-formfield>
-          <ha-formfield label="Show mode headings?">
-            <ha-switch
-              .checked=${this.config?.layout?.mode?.headings !== false}
-              .configValue="${'layout.mode.headings'}"
-              @change=${this.valueChanged}
-            ></ha-switch>
-          </ha-formfield>
+          <!-- AVA-AGENTONE START: display options grid (was: overflowing inline toggles) -->
+          <div class="ava-editor-toggle-grid">
+            <ha-formfield label="Show header?">
+              <ha-switch
+                .checked=${this.config.header !== false}
+                @change=${this.toggleHeader}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode names?">
+              <ha-switch
+                .checked=${this.config?.layout?.mode?.names !== false}
+                .configValue="${'layout.mode.names'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode icons?">
+              <ha-switch
+                .checked=${this.config?.layout?.mode?.icons !== false}
+                .configValue="${'layout.mode.icons'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode headings?">
+              <ha-switch
+                .checked=${this.config?.layout?.mode?.headings !== false}
+                .configValue="${'layout.mode.headings'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+          </div>
+          <!-- AVA-AGENTONE END -->
 
+          <!-- AVA-AGENTONE START: route ha-select dropdowns to _selectChanged
+               instead of valueChanged. valueChanged had a re-fire race and
+               broken dotted-path delete. -->
           ${this.config.header !== false
             ? html`
                 <div class="side-by-side">
@@ -167,7 +174,7 @@ export default class SimpleThermostatEditor extends LitElement {
               label="Decimals (optional)"
               .configValue=${'decimals'}
               .value="${this.config.decimals?.toString() ?? ''}"
-              @selected="${this.valueChanged}"
+              @selected="${this._selectChanged}"
               @closed="${(e) => e.stopPropagation()}"
             >
               ${Object.values(OptionsDecimals).map(
@@ -188,7 +195,7 @@ export default class SimpleThermostatEditor extends LitElement {
               label="Step Layout (optional)"
               .configValue=${'layout.step'}
               .value="${this.config.layout?.step ?? ''}"
-              @selected="${this.valueChanged}"
+              @selected="${this._selectChanged}"
               @closed="${(e) => e.stopPropagation()}"
             >
               ${Object.values(OptionsStepLayout).map(
@@ -200,7 +207,7 @@ export default class SimpleThermostatEditor extends LitElement {
               label="Step Size (optional)"
               .configValue=${'step_size'}
               .value="${this.config.step_size?.toString() ?? ''}"
-              @selected="${this.valueChanged}"
+              @selected="${this._selectChanged}"
               @closed="${(e) => e.stopPropagation()}"
             >
               ${Object.values(OptionsStepSize).map(
@@ -251,7 +258,7 @@ export default class SimpleThermostatEditor extends LitElement {
     fireEvent(this, 'config-changed', { config: this.config })
   }
 
-  // AVA-AGENTONE START: HVAC modes editor methods
+  // AVA-AGENTONE START: HVAC modes editor methods + dropdown fix
   // Auto-discovers the climate entity's hvac_modes and lets the user toggle each.
   //
   // IMPORTANT: upstream `control.hvac` is an ALLOW-LIST when populated, not a deny-list.
@@ -259,6 +266,52 @@ export default class SimpleThermostatEditor extends LitElement {
   // filtered out at render time. So we must always write the FULL enumeration of
   // available modes (each as `true` or `false`), or delete `control.hvac` entirely
   // when every mode is visible.
+
+  // Dedicated handler for <ha-select> dropdowns (Decimals / Step Layout / Step Size).
+  // The shared `valueChanged` had two bugs that broke these:
+  //   1. ha-select's `selected` event re-fires when HA pushes config back into the
+  //      editor, which would overwrite the user's choice with stale state.
+  //   2. `delete copy[target.configValue]` doesn't handle dotted paths like
+  //      'layout.step' — it deletes a literal key, no-op.
+  // This handler guards against the re-fire by comparing the new value to what's
+  // already in config, and walks the path for delete.
+  _selectChanged(ev: any) {
+    if (!this.config || !this.hass) return
+    const target = ev.target
+    if (!target?.configValue) return
+
+    const newValue = target.value ?? ev.detail?.value
+    const currentValue = this._readConfigPath(target.configValue)
+    const normalize = (v: any) => (v == null ? '' : String(v))
+    if (normalize(currentValue) === normalize(newValue)) return
+
+    const copy: any = cloneDeep(this.config)
+    if (newValue == null || newValue === '') {
+      this._deleteConfigPath(copy, target.configValue)
+    } else {
+      setValue(copy, target.configValue, newValue)
+    }
+    fireEvent(this, 'config-changed', { config: copy })
+  }
+
+  _readConfigPath(path: string): any {
+    return path
+      .split('.')
+      .reduce(
+        (o: any, k: string) => (o == null ? undefined : o[k]),
+        this.config as any
+      )
+  }
+
+  _deleteConfigPath(obj: any, path: string) {
+    const parts = path.split('.')
+    let o = obj
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!o[parts[i]]) return
+      o = o[parts[i]]
+    }
+    delete o[parts[parts.length - 1]]
+  }
 
   _isHvacModeEnabled(mode: string): boolean {
     const ctrl: any = this.config?.control

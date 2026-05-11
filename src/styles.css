@@ -291,3 +291,33 @@ header {
   gap: 4px 12px;
 }
 /* AVA-AGENTONE END */
+
+/* AVA-AGENTONE START: v3.3 — editor toggle grid + setpoint style vars */
+
+/* Editor: wrap the four "Show X?" toggles in a responsive grid so they
+   stop overflowing into the Name field area on narrow editor panels. */
+.ava-editor-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 4px 12px;
+  margin: 8px 0;
+}
+
+/* Setpoint customization vars. Defaults preserve upstream behavior;
+   override via card config's `style:` passthrough, e.g.:
+     style:
+       --st-setpoint-font-size: 56px
+       --st-setpoint-font-weight: bold
+*/
+.current--value {
+  font-weight: var(--st-setpoint-font-weight, 400);
+  font-size: var(--st-setpoint-font-size, var(--st-font-size-l, 22px));
+  line-height: var(--st-setpoint-font-size, var(--st-font-size-l, 22px));
+}
+@media (min-width: 768px) {
+  .current--value {
+    font-size: var(--st-setpoint-font-size, var(--st-font-size-xl, 28px));
+    line-height: var(--st-setpoint-font-size, var(--st-font-size-xl, 28px));
+  }
+}
+/* AVA-AGENTONE END */

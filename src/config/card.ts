@@ -61,6 +61,8 @@ interface CardConfig {
   decimals?: number
   step_size?: number
   variables?: LooseObject
+  // AVA-AGENTONE: CSS passthrough — see render() in main.ts for usage
+  style?: Record<string, string>
   layout?: {
     mode: {
       names: boolean

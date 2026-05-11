@@ -436,8 +436,21 @@ export default class SimpleThermostat extends LitElement {
           })
         : ''
     }
+    // AVA-AGENTONE START: style passthrough — emit `config.style` (CSS vars or
+    // plain props) as inline style on ha-card so users can customize without
+    // needing card-mod. Example:
+    //   style:
+    //     --st-setpoint-font-size: 56px
+    //     --st-setpoint-font-weight: bold
+    const styleAttr =
+      this.config.style && typeof this.config.style === 'object'
+        ? Object.entries(this.config.style as Record<string, any>)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join('; ')
+        : ''
+    // AVA-AGENTONE END
     return html`
-      <ha-card class="${classes.join(' ')}">
+      <ha-card class="${classes.join(' ')}" style=${styleAttr}>
         ${warnings}
         ${renderHeader({
           header: this.header,
