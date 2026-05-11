@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.8.0";
+var version = "3.8.1";
 
 /**
  * @license
@@ -577,7 +577,7 @@ class SimpleThermostatEditor extends i$1 {
                 selector: { entity: { domain: 'climate' } },
             },
             {
-                name: 'display_options',
+                name: '',
                 type: 'grid',
                 schema: [
                     { name: 'show_header', selector: { boolean: {} } },
@@ -589,7 +589,7 @@ class SimpleThermostatEditor extends i$1 {
             ...(headerVisible
                 ? [
                     {
-                        name: 'header_fields',
+                        name: '',
                         type: 'grid',
                         schema: [
                             { name: 'header_name', selector: { text: {} } },
@@ -604,7 +604,7 @@ class SimpleThermostatEditor extends i$1 {
                 flatten: true,
                 schema: [
                     {
-                        name: 'advanced_grid',
+                        name: '',
                         type: 'grid',
                         schema: [
                             {
