@@ -1,11 +1,11 @@
 {
   "name": "simple-thermostat-card",
-  "version": "3.8.1",
-  "description": "A different take on the thermostat card for Home Assistant Lovelace UI (Ava-AgentOne fork)",
+  "version": "3.9.0",
+  "description": "A Lovelace thermostat card for Home Assistant",
   "main": "dist/simple-thermostat.js",
   "type": "module",
   "repository": "git@github.com:Ava-AgentOne/simple-thermostat-card.git",
-  "author": "Raymond Julin <raymond.julin@gmail.com> (original), Wheemer (lit-3 modernization), Ava-AgentOne (fork maintainer)",
+  "author": "Ava-AgentOne",
   "license": "MIT",
   "files": [
     "dist",
