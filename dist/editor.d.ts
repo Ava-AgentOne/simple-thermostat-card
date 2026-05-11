@@ -20,6 +20,9 @@ export default class SimpleThermostatEditor extends LitElement {
     render(): import("lit-html").TemplateResult<1>;
     valueChanged(ev: any): void;
     toggleHeader(ev: any): void;
+    _selectChanged(ev: any): void;
+    _readConfigPath(path: string): any;
+    _deleteConfigPath(obj: any, path: string): void;
     _isHvacModeEnabled(mode: string): boolean;
     _hvacModeChanged(mode: string, checked: boolean): void;
     _formatModeName(mode: string): string;

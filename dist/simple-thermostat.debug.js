@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.2.1";
+var version = "3.3.0";
 
 /**
  * @license
@@ -375,6 +375,42 @@ header {
   gap: 4px 12px;
 }
 /* AVA-AGENTONE END */
+
+/* AVA-AGENTONE START: v3.3 — editor toggle grid + setpoint style vars */
+
+/* Editor: wrap the four "Show X?" toggles in a responsive grid so they
+   stop overflowing into the Name field area on narrow editor panels. */
+.ava-editor-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-gap: 4px 12px;
+  gap: 4px 12px;
+  margin: 8px 0;
+}
+
+/* Setpoint customization vars. Defaults preserve upstream behavior;
+   override via card config's \`style:\` passthrough, e.g.:
+     style:
+       --st-setpoint-font-size: 56px
+       --st-setpoint-font-weight: bold
+*/
+.current--value {
+  font-weight: 400;
+  font-weight: var(--st-setpoint-font-weight, 400);
+  font-size: 22px;
+  font-size: var(--st-setpoint-font-size, var(--st-font-size-l, 22px));
+  line-height: 22px;
+  line-height: var(--st-setpoint-font-size, var(--st-font-size-l, 22px));
+}
+@media (min-width: 768px) {
+  .current--value {
+    font-size: 28px;
+    font-size: var(--st-setpoint-font-size, var(--st-font-size-xl, 28px));
+    line-height: 28px;
+    line-height: var(--st-setpoint-font-size, var(--st-font-size-xl, 28px));
+  }
+}
+/* AVA-AGENTONE END */
 `;
 styleInject(css_248z);
 
@@ -457,34 +493,41 @@ class SimpleThermostatEditor extends i$1 {
             ></ha-entity-picker>
           </div>
 
-          <ha-formfield label="Show header?">
-            <ha-switch
-              .checked=${this.config.header !== false}
-              @change=${this.toggleHeader}
-            ></ha-switch>
-          </ha-formfield>
-          <ha-formfield label="Show mode names?">
-            <ha-switch
-              .checked=${((_c = (_b = (_a = this.config) === null || _a === void 0 ? void 0 : _a.layout) === null || _b === void 0 ? void 0 : _b.mode) === null || _c === void 0 ? void 0 : _c.names) !== false}
-              .configValue="${'layout.mode.names'}"
-              @change=${this.valueChanged}
-            ></ha-switch>
-          </ha-formfield>
-          <ha-formfield label="Show mode icons?">
-            <ha-switch
-              .checked=${((_f = (_e = (_d = this.config) === null || _d === void 0 ? void 0 : _d.layout) === null || _e === void 0 ? void 0 : _e.mode) === null || _f === void 0 ? void 0 : _f.icons) !== false}
-              .configValue="${'layout.mode.icons'}"
-              @change=${this.valueChanged}
-            ></ha-switch>
-          </ha-formfield>
-          <ha-formfield label="Show mode headings?">
-            <ha-switch
-              .checked=${((_j = (_h = (_g = this.config) === null || _g === void 0 ? void 0 : _g.layout) === null || _h === void 0 ? void 0 : _h.mode) === null || _j === void 0 ? void 0 : _j.headings) !== false}
-              .configValue="${'layout.mode.headings'}"
-              @change=${this.valueChanged}
-            ></ha-switch>
-          </ha-formfield>
+          <!-- AVA-AGENTONE START: display options grid (was: overflowing inline toggles) -->
+          <div class="ava-editor-toggle-grid">
+            <ha-formfield label="Show header?">
+              <ha-switch
+                .checked=${this.config.header !== false}
+                @change=${this.toggleHeader}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode names?">
+              <ha-switch
+                .checked=${((_c = (_b = (_a = this.config) === null || _a === void 0 ? void 0 : _a.layout) === null || _b === void 0 ? void 0 : _b.mode) === null || _c === void 0 ? void 0 : _c.names) !== false}
+                .configValue="${'layout.mode.names'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode icons?">
+              <ha-switch
+                .checked=${((_f = (_e = (_d = this.config) === null || _d === void 0 ? void 0 : _d.layout) === null || _e === void 0 ? void 0 : _e.mode) === null || _f === void 0 ? void 0 : _f.icons) !== false}
+                .configValue="${'layout.mode.icons'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+            <ha-formfield label="Show mode headings?">
+              <ha-switch
+                .checked=${((_j = (_h = (_g = this.config) === null || _g === void 0 ? void 0 : _g.layout) === null || _h === void 0 ? void 0 : _h.mode) === null || _j === void 0 ? void 0 : _j.headings) !== false}
+                .configValue="${'layout.mode.headings'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
+          </div>
+          <!-- AVA-AGENTONE END -->
 
+          <!-- AVA-AGENTONE START: route ha-select dropdowns to _selectChanged
+               instead of valueChanged. valueChanged had a re-fire race and
+               broken dotted-path delete. -->
           ${this.config.header !== false
             ? b `
                 <div class="side-by-side">
@@ -537,7 +580,7 @@ class SimpleThermostatEditor extends i$1 {
               label="Decimals (optional)"
               .configValue=${'decimals'}
               .value="${(_x = (_w = this.config.decimals) === null || _w === void 0 ? void 0 : _w.toString()) !== null && _x !== void 0 ? _x : ''}"
-              @selected="${this.valueChanged}"
+              @selected="${this._selectChanged}"
               @closed="${(e) => e.stopPropagation()}"
             >
               ${Object.values(OptionsDecimals).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
@@ -556,7 +599,7 @@ class SimpleThermostatEditor extends i$1 {
               label="Step Layout (optional)"
               .configValue=${'layout.step'}
               .value="${(_0 = (_z = this.config.layout) === null || _z === void 0 ? void 0 : _z.step) !== null && _0 !== void 0 ? _0 : ''}"
-              @selected="${this.valueChanged}"
+              @selected="${this._selectChanged}"
               @closed="${(e) => e.stopPropagation()}"
             >
               ${Object.values(OptionsStepLayout).map((item) => b `<ha-list-item .value="${item}">${item}</ha-list-item>`)}
@@ -566,7 +609,7 @@ class SimpleThermostatEditor extends i$1 {
               label="Step Size (optional)"
               .configValue=${'step_size'}
               .value="${(_2 = (_1 = this.config.step_size) === null || _1 === void 0 ? void 0 : _1.toString()) !== null && _2 !== void 0 ? _2 : ''}"
-              @selected="${this.valueChanged}"
+              @selected="${this._selectChanged}"
               @closed="${(e) => e.stopPropagation()}"
             >
               ${Object.values(OptionsStepSize).map((item) => b `<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`)}
@@ -609,7 +652,7 @@ class SimpleThermostatEditor extends i$1 {
         this.config.header = ev.target.checked ? {} : false;
         fireEvent(this, 'config-changed', { config: this.config });
     }
-    // AVA-AGENTONE START: HVAC modes editor methods
+    // AVA-AGENTONE START: HVAC modes editor methods + dropdown fix
     // Auto-discovers the climate entity's hvac_modes and lets the user toggle each.
     //
     // IMPORTANT: upstream `control.hvac` is an ALLOW-LIST when populated, not a deny-list.
@@ -617,6 +660,50 @@ class SimpleThermostatEditor extends i$1 {
     // filtered out at render time. So we must always write the FULL enumeration of
     // available modes (each as `true` or `false`), or delete `control.hvac` entirely
     // when every mode is visible.
+    // Dedicated handler for <ha-select> dropdowns (Decimals / Step Layout / Step Size).
+    // The shared `valueChanged` had two bugs that broke these:
+    //   1. ha-select's `selected` event re-fires when HA pushes config back into the
+    //      editor, which would overwrite the user's choice with stale state.
+    //   2. `delete copy[target.configValue]` doesn't handle dotted paths like
+    //      'layout.step' — it deletes a literal key, no-op.
+    // This handler guards against the re-fire by comparing the new value to what's
+    // already in config, and walks the path for delete.
+    _selectChanged(ev) {
+        var _a, _b;
+        if (!this.config || !this.hass)
+            return;
+        const target = ev.target;
+        if (!(target === null || target === void 0 ? void 0 : target.configValue))
+            return;
+        const newValue = (_a = target.value) !== null && _a !== void 0 ? _a : (_b = ev.detail) === null || _b === void 0 ? void 0 : _b.value;
+        const currentValue = this._readConfigPath(target.configValue);
+        const normalize = (v) => (v == null ? '' : String(v));
+        if (normalize(currentValue) === normalize(newValue))
+            return;
+        const copy = cloneDeep(this.config);
+        if (newValue == null || newValue === '') {
+            this._deleteConfigPath(copy, target.configValue);
+        }
+        else {
+            setValue(copy, target.configValue, newValue);
+        }
+        fireEvent(this, 'config-changed', { config: copy });
+    }
+    _readConfigPath(path) {
+        return path
+            .split('.')
+            .reduce((o, k) => (o == null ? undefined : o[k]), this.config);
+    }
+    _deleteConfigPath(obj, path) {
+        const parts = path.split('.');
+        let o = obj;
+        for (let i = 0; i < parts.length - 1; i++) {
+            if (!o[parts[i]])
+                return;
+            o = o[parts[i]];
+        }
+        delete o[parts[parts.length - 1]];
+    }
     _isHvacModeEnabled(mode) {
         var _a;
         const ctrl = (_a = this.config) === null || _a === void 0 ? void 0 : _a.control;
@@ -1810,8 +1897,20 @@ class SimpleThermostat extends i$1 {
                 })
                 : '';
         }
+        // AVA-AGENTONE START: style passthrough — emit `config.style` (CSS vars or
+        // plain props) as inline style on ha-card so users can customize without
+        // needing card-mod. Example:
+        //   style:
+        //     --st-setpoint-font-size: 56px
+        //     --st-setpoint-font-weight: bold
+        const styleAttr = this.config.style && typeof this.config.style === 'object'
+            ? Object.entries(this.config.style)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join('; ')
+            : '';
+        // AVA-AGENTONE END
         return b `
-      <ha-card class="${classes.join(' ')}">
+      <ha-card class="${classes.join(' ')}" style=${styleAttr}>
         ${warnings}
         ${renderHeader({
             header: this.header,

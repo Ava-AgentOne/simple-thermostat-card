@@ -56,6 +56,7 @@ interface CardConfig {
     decimals?: number;
     step_size?: number;
     variables?: LooseObject;
+    style?: Record<string, string>;
     layout?: {
         mode: {
             names: boolean;
