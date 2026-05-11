@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.6.0";
+var version = "3.7.0";
 
 /**
  * @license
@@ -475,7 +475,7 @@ class SimpleThermostatEditor extends i$1 {
         this.config = config || Object.assign({}, stub);
     }
     render() {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
         if (!this.hass)
             return b ``;
         return b `
@@ -491,14 +491,9 @@ class SimpleThermostatEditor extends i$1 {
               @change="${this.valueChanged}"
               allow-custom-entity
             ></ha-entity-picker>
-            <ha-entity-picker
-              label="Current temperature entity (optional)"
-              .hass=${this.hass}
-              .value="${this.config.current_temperature_entity}"
-              .configValue=${'current_temperature_entity'}
-              @change="${this.valueChanged}"
-              allow-custom-entity
-            ></ha-entity-picker>
+            <!-- AVA-AGENTONE v3.7: removed Current temperature entity picker.
+                 The climate entity already exposes current_temperature as an
+                 attribute; the override was redundant and cluttered the editor. -->
           </div>
 
           <!-- AVA-AGENTONE START: display options grid (was: overflowing inline toggles) -->
@@ -523,6 +518,13 @@ class SimpleThermostatEditor extends i$1 {
                 @change=${this.valueChanged}
               ></ha-switch>
             </ha-formfield>
+            <ha-formfield label="Show mode headings?">
+              <ha-switch
+                .checked=${((_j = (_h = (_g = this.config) === null || _g === void 0 ? void 0 : _g.layout) === null || _h === void 0 ? void 0 : _h.mode) === null || _j === void 0 ? void 0 : _j.headings) !== false}
+                .configValue="${'layout.mode.headings'}"
+                @change=${this.valueChanged}
+              ></ha-switch>
+            </ha-formfield>
           </div>
           <!-- AVA-AGENTONE END -->
 
@@ -534,56 +536,24 @@ class SimpleThermostatEditor extends i$1 {
                 <div class="side-by-side">
                   <ha-input
                     label="Name (optional)"
-                    .value="${(_h = (_g = this.config.header) === null || _g === void 0 ? void 0 : _g.name) !== null && _h !== void 0 ? _h : ''}"
+                    .value="${(_l = (_k = this.config.header) === null || _k === void 0 ? void 0 : _k.name) !== null && _l !== void 0 ? _l : ''}"
                     .configValue="${'header.name'}"
                     @input="${this.valueChanged}"
                   ></ha-input>
 
                   <ha-icon-picker
                     label="Icon (optional)"
-                    .value="${(_j = this.config.header) === null || _j === void 0 ? void 0 : _j.icon}"
+                    .value="${(_m = this.config.header) === null || _m === void 0 ? void 0 : _m.icon}"
                     .configValue=${'header.icon'}
                     @value-changed=${this.valueChanged}
                   ></ha-icon-picker>
                 </div>
-
-                <div class="side-by-side">
-                  <ha-entity-picker
-                    label="Toggle Entity (optional)"
-                    .hass=${this.hass}
-                    .value="${(_m = (_l = (_k = this.config) === null || _k === void 0 ? void 0 : _k.header) === null || _l === void 0 ? void 0 : _l.toggle) === null || _m === void 0 ? void 0 : _m.entity}"
-                    .configValue=${'header.toggle.entity'}
-                    @change="${this.valueChanged}"
-                    allow-custom-entity
-                  ></ha-entity-picker>
-
-                  <ha-input
-                    label="Toggle entity label"
-                    .value="${(_r = (_q = (_p = (_o = this.config) === null || _o === void 0 ? void 0 : _o.header) === null || _p === void 0 ? void 0 : _p.toggle) === null || _q === void 0 ? void 0 : _q.name) !== null && _r !== void 0 ? _r : ''}"
-                    .configValue="${'header.toggle.name'}"
-                    @input="${this.valueChanged}"
-                  ></ha-input>
-                </div>
+                <!-- AVA-AGENTONE v3.7: removed Toggle Entity + Toggle entity label row -->
               `
             : ''}
 
-          <div class="side-by-side">
-            <ha-input
-              label="Fallback Text (optional)"
-              .value="${(_s = this.config.fallback) !== null && _s !== void 0 ? _s : ''}"
-              .configValue="${'fallback'}"
-              @input="${this.valueChanged}"
-            ></ha-input>
-          </div>
-
-          <div class="side-by-side">
-            <ha-input
-              label="Unit (optional)"
-              .value="${(_t = this.config.unit) !== null && _t !== void 0 ? _t : ''}"
-              .configValue="${'unit'}"
-              @input="${this.valueChanged}"
-            ></ha-input>
-          </div>
+          <!-- AVA-AGENTONE v3.7: removed Fallback Text and Unit input blocks.
+               Both remain configurable via YAML (fallback and unit keys). -->
 
           <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
                v3.5: switched from slotted <ha-list-item> children to .options property.
@@ -601,7 +571,7 @@ class SimpleThermostatEditor extends i$1 {
               <ha-select
                 label="Decimals (optional)"
                 .configValue=${'decimals'}
-                .value=${(_v = (_u = this.config.decimals) === null || _u === void 0 ? void 0 : _u.toString()) !== null && _v !== void 0 ? _v : ''}
+                .value=${(_p = (_o = this.config.decimals) === null || _o === void 0 ? void 0 : _o.toString()) !== null && _p !== void 0 ? _p : ''}
                 .options=${OptionsDecimals.map((v) => ({
             value: v.toString(),
             label: v.toString(),
@@ -612,7 +582,7 @@ class SimpleThermostatEditor extends i$1 {
               <ha-select
                 label="Step Size (optional)"
                 .configValue=${'step_size'}
-                .value=${(_x = (_w = this.config.step_size) === null || _w === void 0 ? void 0 : _w.toString()) !== null && _x !== void 0 ? _x : ''}
+                .value=${(_r = (_q = this.config.step_size) === null || _q === void 0 ? void 0 : _q.toString()) !== null && _r !== void 0 ? _r : ''}
                 .options=${OptionsStepSize.map((v) => ({
             value: v.toString(),
             label: v.toString(),
@@ -625,7 +595,7 @@ class SimpleThermostatEditor extends i$1 {
               <ha-select
                 label="Step Layout (optional)"
                 .configValue=${'layout.step'}
-                .value=${(_z = (_y = this.config.layout) === null || _y === void 0 ? void 0 : _y.step) !== null && _z !== void 0 ? _z : ''}
+                .value=${(_t = (_s = this.config.layout) === null || _s === void 0 ? void 0 : _s.step) !== null && _t !== void 0 ? _t : ''}
                 .options=${OptionsStepLayout.map((v) => ({
             value: v,
             label: v,
@@ -1977,7 +1947,9 @@ class SimpleThermostat extends i$1 {
                   ${formatNumber(value, Object.assign(Object.assign({}, config), { fallback: entity.state === HVAC_MODES.OFF
                     ? 'OFF'
                     : config.fallback, locale: this._hass.locale }))}
-                  ${showUnit
+                  ${ /* AVA-AGENTONE v3.7: setpoint unit hidden by default
+                 (was accidentally hiding current temp unit too in v3.6).
+                 To re-enable, set `show_setpoint_unit: true` in YAML. */showUnit && this.config.show_setpoint_unit === true
                 ? b `<span class="current--unit">${unit}</span>`
                 : A}
                 </h3>
@@ -2021,14 +1993,11 @@ class SimpleThermostat extends i$1 {
         return 3;
     }
     getUnit() {
-        var _a;
+        var _a, _b, _c, _d;
         if (['boolean', 'string'].includes(typeof this.config.unit)) {
             return (_a = this.config) === null || _a === void 0 ? void 0 : _a.unit;
         }
-        // AVA-AGENTONE v3.6: default to hiding the °C/°F suffix on the setpoint.
-        // The big setpoint number looks cleaner without the unit suffix. Users
-        // who want the unit back can set `unit: true` or `unit: "°C"` in YAML.
-        return false;
+        return (_d = (_c = (_b = this._hass.config) === null || _b === void 0 ? void 0 : _b.unit_system) === null || _c === void 0 ? void 0 : _c.temperature) !== null && _d !== void 0 ? _d : false;
     }
 }
 __decorate([

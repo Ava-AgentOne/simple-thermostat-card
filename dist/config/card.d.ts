@@ -57,6 +57,7 @@ interface CardConfig {
     step_size?: number;
     variables?: LooseObject;
     style?: Record<string, string>;
+    show_setpoint_unit?: boolean;
     layout?: {
         mode: {
             names: boolean;
