@@ -2,6 +2,22 @@
 
 All notable changes to this fork are documented here. For the full upstream history through v3.0.26, see [Wheemer/simple-thermostat](https://github.com/Wheemer/simple-thermostat).
 
+## [v3.5.0] - 2026-05-11
+
+### Fixed — Dropdowns (third attempt, properly diagnosed)
+- **Decimals / Step Size / Step Layout dropdowns now actually save.** Prior fix attempts in v3.3 and v3.4 were chasing the wrong bug entirely.
+
+  Root cause: in Feb 2026 (HA frontend commit `f5cc2104`), HA refactored `<ha-select>` to use their `<ha-dropdown>` component internally. The new ha-select renders `<ha-dropdown-item>` children itself when given a `.options` property array, and only those children dispatch the `wa-select` event that gets re-emitted as `selected`. Slotted `<ha-list-item>` children (inherited from upstream Wheemer's editor) still render via the fallback slot, but they don't wire into the new event chain, so picking one silently does nothing.
+
+  Fix: all three `<ha-select>` instances now pass options as a `.options` property array. No more slotted children, no more `@closed` stopPropagation workaround needed (it was masking the symptom). v3.4's `_selectChanged` handler is retained — it was correct for HA's emitted event shape, just never had a chance to fire.
+
+### Fixed — Show header / Name textfield
+- Toggling "Show header?" on now reliably reveals the Name (optional) textfield. The previous `toggleHeader` handler mutated `this.config.header` directly, which could leave Lit's reactive change detection in an ambiguous state — the textfield's conditional render block sometimes didn't update. Now uses `cloneDeep` + fires a new config object, matching the pattern of every other change handler in the editor.
+
+### Notes
+- v3.3 and v3.4 each shipped with a confidently-stated dropdown fix that didn't fix the bug. v3.3 invented an "event re-fire race" that doesn't exist; v3.4 fixed an event-reading issue that was real but irrelevant because `selected` never fired in the first place. The actual problem was the rendering layer, not the event layer. Apologies for the noise across three releases — that's been corrected here by reading the modern ha-select source directly (`home-assistant/frontend` tag `20260429.3`) before writing the fix.
+- All v3.5 changes remain wrapped in `AVA-AGENTONE` markers in `src/editor.ts`.
+
 ## [v3.4.0] - 2026-05-11
 
 ### Fixed — Editor dropdowns (real fix this time)

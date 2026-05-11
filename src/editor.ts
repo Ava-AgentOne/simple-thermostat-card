@@ -172,10 +172,12 @@ export default class SimpleThermostatEditor extends LitElement {
           </div>
 
           <!-- AVA-AGENTONE START: Advanced collapsible (Decimals / Step Layout / Step Size).
-               Per v3.4 spec: these are reachable but hidden by default to declutter the
-               editor. Step Layout was explicitly kept; Decimals and Step Size are kept
-               here too for completeness (rather than removed entirely) so users can still
-               adjust them without dropping to YAML. -->
+               v3.5: switched from slotted <ha-list-item> children to .options property.
+               Post-Feb-2026 ha-select uses ha-dropdown internally and only fires
+               selected when ha-dropdown-item children dispatch wa-select. Slotted
+               ha-list-item renders visually via slot fallback but never wires the
+               event chain — selection silently does nothing. Using .options lets
+               ha-select render proper ha-dropdown-items itself. -->
           <ha-expansion-panel
             class="ava-advanced-panel"
             outlined
@@ -185,40 +187,37 @@ export default class SimpleThermostatEditor extends LitElement {
               <ha-select
                 label="Decimals (optional)"
                 .configValue=${'decimals'}
-                .value="${this.config.decimals?.toString() ?? ''}"
-                @selected="${this._selectChanged}"
-                @closed="${(e) => e.stopPropagation()}"
-              >
-                ${Object.values(OptionsDecimals).map(
-                  (item) => html`<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`
-                )}
-              </ha-select>
+                .value=${this.config.decimals?.toString() ?? ''}
+                .options=${OptionsDecimals.map((v) => ({
+                  value: v.toString(),
+                  label: v.toString(),
+                }))}
+                @selected=${this._selectChanged}
+              ></ha-select>
 
               <ha-select
                 label="Step Size (optional)"
                 .configValue=${'step_size'}
-                .value="${this.config.step_size?.toString() ?? ''}"
-                @selected="${this._selectChanged}"
-                @closed="${(e) => e.stopPropagation()}"
-              >
-                ${Object.values(OptionsStepSize).map(
-                  (item) => html`<ha-list-item .value="${item.toString()}">${item}</ha-list-item>`
-                )}
-              </ha-select>
+                .value=${this.config.step_size?.toString() ?? ''}
+                .options=${OptionsStepSize.map((v) => ({
+                  value: v.toString(),
+                  label: v.toString(),
+                }))}
+                @selected=${this._selectChanged}
+              ></ha-select>
             </div>
 
             <div class="side-by-side">
               <ha-select
                 label="Step Layout (optional)"
                 .configValue=${'layout.step'}
-                .value="${this.config.layout?.step ?? ''}"
-                @selected="${this._selectChanged}"
-                @closed="${(e) => e.stopPropagation()}"
-              >
-                ${Object.values(OptionsStepLayout).map(
-                  (item) => html`<ha-list-item .value="${item}">${item}</ha-list-item>`
-                )}
-              </ha-select>
+                .value=${this.config.layout?.step ?? ''}
+                .options=${OptionsStepLayout.map((v) => ({
+                  value: v,
+                  label: v,
+                }))}
+                @selected=${this._selectChanged}
+              ></ha-select>
             </div>
           </ha-expansion-panel>
           <!-- AVA-AGENTONE END -->
@@ -261,8 +260,13 @@ export default class SimpleThermostatEditor extends LitElement {
   }
 
   toggleHeader(ev) {
-    this.config.header = ev.target.checked ? {} : false
-    fireEvent(this, 'config-changed', { config: this.config })
+    // v3.5: Properly clone config rather than mutating this.config directly.
+    // The previous mutation pattern could leave Lit's change detection unsure
+    // whether to re-render, which may explain why the Name textfield didn't
+    // appear after toggling Show header on.
+    const copy: any = cloneDeep(this.config)
+    copy.header = ev.target.checked ? {} : false
+    fireEvent(this, 'config-changed', { config: copy })
   }
 
   // AVA-AGENTONE START: HVAC modes editor methods + dropdown fix
