@@ -82,6 +82,7 @@ export default class SimpleThermostatEditor extends LitElement {
                 name: string;
                 selector: {
                     select: {
+                        mode: string;
                         options: {
                             value: string;
                             label: string;
@@ -94,6 +95,7 @@ export default class SimpleThermostatEditor extends LitElement {
             name: string;
             selector: {
                 select: {
+                    mode: string;
                     options: {
                         value: string;
                         label: string;
