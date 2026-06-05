@@ -33,6 +33,10 @@ export default class SimpleThermostat extends LitElement {
     render({ _hide, _values, _updatingValues, config, entity }?: this): import("lit-html").TemplateResult<1>;
     toggleEntityChanged: (ev: Event, entityId?: string) => void;
     setTemperature(change: number, field: string): void;
+    _rampTimer: any;
+    _rampStart: number;
+    _startRamp(direction: 1 | -1, field: string): void;
+    _stopRamp: () => void;
     setMode: (type: string, mode: string) => void;
     openEntityPopover: (entityId?: any) => void;
     getCardSize(): number;

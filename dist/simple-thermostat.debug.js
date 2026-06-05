@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.9.1";
+var version = "3.10.0";
 
 /**
  * @license
@@ -423,6 +423,29 @@ header {
   margin-top: 8px;
 }
 /* AVA-AGENTONE END v3.4 */
+
+/* AVA-AGENTONE v3.10: mode-state-driven setpoint color.
+   The hvac_action attribute is emitted as a class on <ha-card>:
+   cooling / heating / drying / fan / idle / off / (none).
+   Tint the big setpoint number based on what the AC is actively doing. */
+ha-card.cooling .current--value {
+  color: #4a9eff;
+  color: var(--st-setpoint-cooling-color, #4a9eff);
+}
+ha-card.heating .current--value {
+  color: #ff6b4a;
+  color: var(--st-setpoint-heating-color, #ff6b4a);
+}
+ha-card.drying .current--value {
+  color: #ffb74a;
+  color: var(--st-setpoint-drying-color, #ffb74a);
+}
+ha-card.fan .current--value {
+  color: #7ad9c8;
+  color: var(--st-setpoint-fan-color, #7ad9c8);
+}
+/* idle / off / no action: fall through to the default color */
+/* AVA-AGENTONE END v3.10 */
 `;
 styleInject(css_248z);
 
@@ -1598,6 +1621,26 @@ class SimpleThermostat extends i$1 {
                 entity_id: entityId,
             });
         };
+        // AVA-AGENTONE v3.10: accelerating long-press ramp for setpoint buttons.
+        //
+        // Behavior:
+        //   - tap (release before 400ms): one step, same as before
+        //   - hold past 400ms: ~3 ticks/sec (phase 1)
+        //   - hold past 1.5s:  ~6 ticks/sec (phase 2)
+        //   - hold past 3.5s:  ~10 ticks/sec (phase 3)
+        //   - release / cancel: stop immediately
+        //
+        // Optimistic local updates fire every tick; the existing _debouncedSetTemperature
+        // coalesces them into a single (trailing) service call so we don't spam HA.
+        this._rampTimer = null;
+        this._rampStart = 0;
+        this._stopRamp = () => {
+            if (this._rampTimer !== null) {
+                clearTimeout(this._rampTimer);
+                this._rampTimer = null;
+            }
+        };
+        // AVA-AGENTONE END v3.10
         this.setMode = (type, mode) => {
             if (type && mode) {
                 if (MODES_WITH_POSITIONS.includes(type)) {
@@ -1888,7 +1931,10 @@ class SimpleThermostat extends i$1 {
                   ?disabled=${maxTemp !== null && value >= maxTemp}
                   class="thermostat-trigger"
                   icon=${row ? ICONS.PLUS : ICONS.UP}
-                  @click="${() => this.setTemperature(this.stepSize, field)}"
+                  @pointerdown=${() => this._startRamp(1, field)}
+                  @pointerup=${this._stopRamp}
+                  @pointercancel=${this._stopRamp}
+                  @pointerleave=${this._stopRamp}
                 >
                   <ha-icon .icon=${row ? ICONS.PLUS : ICONS.UP}></ha-icon>
                 </ha-icon-button>
@@ -1912,7 +1958,10 @@ class SimpleThermostat extends i$1 {
                   ?disabled=${minTemp !== null && value <= minTemp}
                   class="thermostat-trigger"
                   icon=${row ? ICONS.MINUS : ICONS.DOWN}
-                  @click="${() => this.setTemperature(-this.stepSize, field)}"
+                  @pointerdown=${() => this._startRamp(-1, field)}
+                  @pointerup=${this._stopRamp}
+                  @pointercancel=${this._stopRamp}
+                  @pointerleave=${this._stopRamp}
                 >
                   <ha-icon .icon=${row ? ICONS.MINUS : ICONS.DOWN}></ha-icon>
                 </ha-icon-button>
@@ -1941,6 +1990,33 @@ class SimpleThermostat extends i$1 {
         const { decimals } = this.config;
         this._values = Object.assign(Object.assign({}, this._values), { [field]: +formatNumber(newValue, { decimals }) });
         this._debouncedSetTemperature(this._values);
+    }
+    _startRamp(direction, field) {
+        // First, do the immediate single step (this is the "tap" behavior).
+        this.setTemperature(direction * this.stepSize, field);
+        this._rampStart = Date.now();
+        // Then schedule the next step at the hold-delay boundary.
+        const scheduleNext = () => {
+            const elapsed = Date.now() - this._rampStart;
+            // Pick interval based on how long we've been holding.
+            let interval;
+            if (elapsed < 400)
+                interval = 400 - elapsed; // wait out the hold delay first
+            else if (elapsed < 1500)
+                interval = 333; // ~3 Hz
+            else if (elapsed < 3500)
+                interval = 167; // ~6 Hz
+            else
+                interval = 100; // ~10 Hz
+            this._rampTimer = setTimeout(() => {
+                // Defensive: if cleared between scheduling and firing, do nothing.
+                if (this._rampTimer === null)
+                    return;
+                this.setTemperature(direction * this.stepSize, field);
+                scheduleNext();
+            }, interval);
+        };
+        scheduleNext();
     }
     // The height of your card. Home Assistant uses this to automatically
     // distribute all cards over the available columns.
