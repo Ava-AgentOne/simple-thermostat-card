@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.10.0";
+var version = "3.10.1";
 
 /**
  * @license
@@ -1629,6 +1629,7 @@ class SimpleThermostat extends i$1 {
         //   - hold past 1.5s:  ~6 ticks/sec (phase 2)
         //   - hold past 3.5s:  ~10 ticks/sec (phase 3)
         //   - release / cancel: stop immediately
+        //   - hits min/max: stop immediately (added v3.10.1)
         //
         // Optimistic local updates fire every tick; the existing _debouncedSetTemperature
         // coalesces them into a single (trailing) service call so we don't spam HA.
@@ -1984,12 +1985,33 @@ class SimpleThermostat extends i$1 {
     `;
     }
     setTemperature(change, field) {
+        var _a, _b, _c, _d;
         this._updatingValues = true;
         const previousValue = this._values[field];
-        const newValue = Number(previousValue) + change;
+        let newValue = Number(previousValue) + change;
+        // AVA-AGENTONE v3.10.1: clamp to entity min/max so long-press ramp
+        // can't drive past the entity's allowed range. The single-tap path
+        // had ?disabled on the button, but pointer-event ramp bypasses that.
+        const minTemp = (_b = (_a = this.entity) === null || _a === void 0 ? void 0 : _a.attributes) === null || _b === void 0 ? void 0 : _b.min_temp;
+        const maxTemp = (_d = (_c = this.entity) === null || _c === void 0 ? void 0 : _c.attributes) === null || _d === void 0 ? void 0 : _d.max_temp;
+        if (typeof maxTemp === 'number' && newValue > maxTemp)
+            newValue = maxTemp;
+        if (typeof minTemp === 'number' && newValue < minTemp)
+            newValue = minTemp;
         const { decimals } = this.config;
         this._values = Object.assign(Object.assign({}, this._values), { [field]: +formatNumber(newValue, { decimals }) });
         this._debouncedSetTemperature(this._values);
+    }
+    _rampLimitReached(direction, field) {
+        var _a, _b, _c, _d;
+        const currentValue = Number(this._values[field]);
+        const minTemp = (_b = (_a = this.entity) === null || _a === void 0 ? void 0 : _a.attributes) === null || _b === void 0 ? void 0 : _b.min_temp;
+        const maxTemp = (_d = (_c = this.entity) === null || _c === void 0 ? void 0 : _c.attributes) === null || _d === void 0 ? void 0 : _d.max_temp;
+        if (direction === 1 && typeof maxTemp === 'number' && currentValue >= maxTemp)
+            return true;
+        if (direction === -1 && typeof minTemp === 'number' && currentValue <= minTemp)
+            return true;
+        return false;
     }
     _startRamp(direction, field) {
         // First, do the immediate single step (this is the "tap" behavior).
@@ -1997,6 +2019,12 @@ class SimpleThermostat extends i$1 {
         this._rampStart = Date.now();
         // Then schedule the next step at the hold-delay boundary.
         const scheduleNext = () => {
+            // Stop if we've hit the entity's min/max — no point continuing to fire
+            // setTemperature calls that get clamped to the same value.
+            if (this._rampLimitReached(direction, field)) {
+                this._stopRamp();
+                return;
+            }
             const elapsed = Date.now() - this._rampStart;
             // Pick interval based on how long we've been holding.
             let interval;

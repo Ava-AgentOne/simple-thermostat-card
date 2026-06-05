@@ -35,6 +35,7 @@ export default class SimpleThermostat extends LitElement {
     setTemperature(change: number, field: string): void;
     _rampTimer: any;
     _rampStart: number;
+    _rampLimitReached(direction: 1 | -1, field: string): boolean;
     _startRamp(direction: 1 | -1, field: string): void;
     _stopRamp: () => void;
     setMode: (type: string, mode: string) => void;
