@@ -151,6 +151,7 @@ export default class SimpleThermostatEditor extends LitElement {
                 name: 'decimals',
                 selector: {
                   select: {
+                    mode: 'dropdown',
                     options: [
                       { value: '', label: 'Default' },
                       { value: '0', label: '0' },
@@ -163,6 +164,7 @@ export default class SimpleThermostatEditor extends LitElement {
                 name: 'step_size',
                 selector: {
                   select: {
+                    mode: 'dropdown',
                     options: [
                       { value: '', label: 'Default' },
                       { value: '0.5', label: '0.5' },
@@ -177,6 +179,7 @@ export default class SimpleThermostatEditor extends LitElement {
             name: 'step_layout',
             selector: {
               select: {
+                mode: 'dropdown',
                 options: [
                   { value: '', label: 'Default' },
                   { value: 'column', label: 'column' },

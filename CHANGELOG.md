@@ -1,5 +1,10 @@
 # Changelog
 
+## [v3.9.1] - 2026-06-05
+
+### Changed
+- Advanced section (Decimals / Step Size / Step Layout) now renders as compact dropdowns instead of stacked radio buttons. HA's `select` selector defaults to `mode: 'list'` (radios) when there are fewer than 6 options; we explicitly set `mode: 'dropdown'` to override. The Advanced panel is now ~70% shorter.
+
 ## [v3.9.0] - 2026-05-11
 
 Initial release.
