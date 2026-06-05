@@ -469,7 +469,10 @@ export default class SimpleThermostat extends LitElement {
                   ?disabled=${maxTemp !== null && value >= maxTemp}
                   class="thermostat-trigger"
                   icon=${row ? ICONS.PLUS : ICONS.UP}
-                  @click="${() => this.setTemperature(this.stepSize, field)}"
+                  @pointerdown=${() => this._startRamp(1, field)}
+                  @pointerup=${this._stopRamp}
+                  @pointercancel=${this._stopRamp}
+                  @pointerleave=${this._stopRamp}
                 >
                   <ha-icon .icon=${row ? ICONS.PLUS : ICONS.UP}></ha-icon>
                 </ha-icon-button>
@@ -499,7 +502,10 @@ export default class SimpleThermostat extends LitElement {
                   ?disabled=${minTemp !== null && value <= minTemp}
                   class="thermostat-trigger"
                   icon=${row ? ICONS.MINUS : ICONS.DOWN}
-                  @click="${() => this.setTemperature(-this.stepSize, field)}"
+                  @pointerdown=${() => this._startRamp(-1, field)}
+                  @pointerup=${this._stopRamp}
+                  @pointercancel=${this._stopRamp}
+                  @pointerleave=${this._stopRamp}
                 >
                   <ha-icon .icon=${row ? ICONS.MINUS : ICONS.DOWN}></ha-icon>
                 </ha-icon-button>
@@ -546,6 +552,54 @@ export default class SimpleThermostat extends LitElement {
     }
     this._debouncedSetTemperature(this._values)
   }
+
+  // AVA-AGENTONE v3.10: accelerating long-press ramp for setpoint buttons.
+  //
+  // Behavior:
+  //   - tap (release before 400ms): one step, same as before
+  //   - hold past 400ms: ~3 ticks/sec (phase 1)
+  //   - hold past 1.5s:  ~6 ticks/sec (phase 2)
+  //   - hold past 3.5s:  ~10 ticks/sec (phase 3)
+  //   - release / cancel: stop immediately
+  //
+  // Optimistic local updates fire every tick; the existing _debouncedSetTemperature
+  // coalesces them into a single (trailing) service call so we don't spam HA.
+
+  _rampTimer: any = null
+  _rampStart = 0
+
+  _startRamp(direction: 1 | -1, field: string) {
+    // First, do the immediate single step (this is the "tap" behavior).
+    this.setTemperature(direction * this.stepSize, field)
+    this._rampStart = Date.now()
+
+    // Then schedule the next step at the hold-delay boundary.
+    const scheduleNext = () => {
+      const elapsed = Date.now() - this._rampStart
+      // Pick interval based on how long we've been holding.
+      let interval: number
+      if (elapsed < 400) interval = 400 - elapsed // wait out the hold delay first
+      else if (elapsed < 1500) interval = 333 // ~3 Hz
+      else if (elapsed < 3500) interval = 167 // ~6 Hz
+      else interval = 100 // ~10 Hz
+
+      this._rampTimer = setTimeout(() => {
+        // Defensive: if cleared between scheduling and firing, do nothing.
+        if (this._rampTimer === null) return
+        this.setTemperature(direction * this.stepSize, field)
+        scheduleNext()
+      }, interval)
+    }
+    scheduleNext()
+  }
+
+  _stopRamp = () => {
+    if (this._rampTimer !== null) {
+      clearTimeout(this._rampTimer)
+      this._rampTimer = null
+    }
+  }
+  // AVA-AGENTONE END v3.10
 
   setMode = (type: string, mode: string) => {
     if (type && mode) {

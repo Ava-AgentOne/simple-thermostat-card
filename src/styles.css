@@ -333,3 +333,22 @@ header {
   margin-top: 8px;
 }
 /* AVA-AGENTONE END v3.4 */
+
+/* AVA-AGENTONE v3.10: mode-state-driven setpoint color.
+   The hvac_action attribute is emitted as a class on <ha-card>:
+   cooling / heating / drying / fan / idle / off / (none).
+   Tint the big setpoint number based on what the AC is actively doing. */
+ha-card.cooling .current--value {
+  color: var(--st-setpoint-cooling-color, #4a9eff);
+}
+ha-card.heating .current--value {
+  color: var(--st-setpoint-heating-color, #ff6b4a);
+}
+ha-card.drying .current--value {
+  color: var(--st-setpoint-drying-color, #ffb74a);
+}
+ha-card.fan .current--value {
+  color: var(--st-setpoint-fan-color, #7ad9c8);
+}
+/* idle / off / no action: fall through to the default color */
+/* AVA-AGENTONE END v3.10 */
