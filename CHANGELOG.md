@@ -1,5 +1,10 @@
 # Changelog
 
+## [v3.10.1] - 2026-06-05
+
+### Fixed
+- Long-press ramp now respects the entity's `min_temp` and `max_temp` attributes. Previously, holding + would ramp past the upper limit (e.g. past 30°C); holding − would ramp below the lower limit. The single-tap path was already protected by `?disabled` on the button, but the pointer-event-based ramp bypassed that. Fixed by clamping inside `setTemperature` itself (defensive, single source of truth) and stopping the ramp scheduler once a limit is reached (no point continuing to fire calls that get clamped to the same value).
+
 ## [v3.10.0] - 2026-06-05
 
 ### Added — Accelerating long-press on setpoint buttons

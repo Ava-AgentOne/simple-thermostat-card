@@ -543,7 +543,16 @@ export default class SimpleThermostat extends LitElement {
   setTemperature(change: number, field: string) {
     this._updatingValues = true
     const previousValue = this._values[field]
-    const newValue = Number(previousValue) + change
+    let newValue = Number(previousValue) + change
+
+    // AVA-AGENTONE v3.10.1: clamp to entity min/max so long-press ramp
+    // can't drive past the entity's allowed range. The single-tap path
+    // had ?disabled on the button, but pointer-event ramp bypasses that.
+    const minTemp = this.entity?.attributes?.min_temp
+    const maxTemp = this.entity?.attributes?.max_temp
+    if (typeof maxTemp === 'number' && newValue > maxTemp) newValue = maxTemp
+    if (typeof minTemp === 'number' && newValue < minTemp) newValue = minTemp
+
     const { decimals } = this.config
 
     this._values = {
@@ -561,12 +570,22 @@ export default class SimpleThermostat extends LitElement {
   //   - hold past 1.5s:  ~6 ticks/sec (phase 2)
   //   - hold past 3.5s:  ~10 ticks/sec (phase 3)
   //   - release / cancel: stop immediately
+  //   - hits min/max: stop immediately (added v3.10.1)
   //
   // Optimistic local updates fire every tick; the existing _debouncedSetTemperature
   // coalesces them into a single (trailing) service call so we don't spam HA.
 
   _rampTimer: any = null
   _rampStart = 0
+
+  _rampLimitReached(direction: 1 | -1, field: string): boolean {
+    const currentValue = Number(this._values[field])
+    const minTemp = this.entity?.attributes?.min_temp
+    const maxTemp = this.entity?.attributes?.max_temp
+    if (direction === 1 && typeof maxTemp === 'number' && currentValue >= maxTemp) return true
+    if (direction === -1 && typeof minTemp === 'number' && currentValue <= minTemp) return true
+    return false
+  }
 
   _startRamp(direction: 1 | -1, field: string) {
     // First, do the immediate single step (this is the "tap" behavior).
@@ -575,6 +594,13 @@ export default class SimpleThermostat extends LitElement {
 
     // Then schedule the next step at the hold-delay boundary.
     const scheduleNext = () => {
+      // Stop if we've hit the entity's min/max — no point continuing to fire
+      // setTemperature calls that get clamped to the same value.
+      if (this._rampLimitReached(direction, field)) {
+        this._stopRamp()
+        return
+      }
+
       const elapsed = Date.now() - this._rampStart
       // Pick interval based on how long we've been holding.
       let interval: number
