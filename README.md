@@ -6,6 +6,20 @@
 
 A Lovelace thermostat card for Home Assistant. Compact layout, configurable header, sensor rows, per-mode visibility toggles, and a visual editor for the common configuration.
 
+![Card example](docs/card.png)
+
+## Features
+
+- **Compact, configurable layout.** Current temperature, target temperature with ± step buttons, mode buttons in a single small card. Step buttons render as a row or a column.
+- **Sensor rows under the header.** Drop any HA entity into the card (humidity, outdoor temperature, occupancy, anything) with custom name and icon.
+- **Custom title and icon.** The "BedRoom" + AC icon shown above is set in the visual editor — no need to rename the underlying climate entity.
+- **Per-mode visibility toggles in the visual editor.** The card auto-discovers which HVAC modes your climate entity supports (off / cool / heat_cool / dry / fan_only / etc.) and lets you toggle each one on or off — no YAML needed to hide a button.
+- **Clean setpoint by default.** The big target number drops the °C/°F suffix so the number reads cleanly. Set `show_setpoint_unit: true` if you want the suffix back.
+- **CSS variable passthrough.** A `style:` block in YAML lets you customize sizing, weight, colors per card without needing card-mod or theme files.
+- **Modern visual editor.** Built on Home Assistant's `<ha-form>` + selectors, the same architecture HA's own card editors use. Resilient to HA frontend refactors.
+
+![Editor example](docs/editor.png)
+
 ## Installation
 
 ### Via HACS (recommended)
