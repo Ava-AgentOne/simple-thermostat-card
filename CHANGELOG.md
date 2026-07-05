@@ -1,5 +1,19 @@
 # Changelog
 
+## v3.11.0 - 2026-07-05
+
+### Fixed
+- **Touch: scrolling from a +/- button no longer changes the setpoint.** The tap step used to fire on `pointerdown`, so starting a dashboard scroll on the button stepped the temperature once before the browser took over the gesture. The tap step now fires on `pointerup`; `pointercancel`/`pointerleave` cancel the press with no step. Long-press ramp behavior is unchanged (first auto-step at the 400ms hold boundary, then accelerating).
+- Flaky unit test that asserted lit whitespace layout (broke on newer lit).
+
+### Added
+- **HA 2026.6+ card picker suggestions** — the card now registers `getEntitySuggestion`, so it appears under the Community section of the card picker when a climate entity is selected.
+- `touch-action: manipulation` on the setpoint buttons (no more double-tap-zoom delay on touch).
+
+### Changed
+- All dependencies exact-pinned (CI installs resolved fresh, unpinned versions on every build — the stale `yarn.lock` was not used by the npm-based workflows and has been removed).
+- Removed unused semantic-release config and dependencies (releases are tag-driven via GitHub Actions).
+
 ## [v3.10.1] - 2026-06-05
 
 ### Fixed

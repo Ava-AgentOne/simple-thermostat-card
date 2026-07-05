@@ -36,8 +36,8 @@ test('render into dom', () => {
   const heading = document.body.querySelector('div').textContent
   const value = document.body.querySelector('div:last-child').textContent
 
-  // TODO Spaces exist in render result. For sanitys sake they should probably be removed
-  expect(heading).toBe(` ${spec.heading}: `)
+  // Whitespace around the heading varies between lit versions — compare trimmed
+  expect(heading.trim()).toBe(`${spec.heading}:`)
   expect(value).toBe(spec.value)
 })
 
