@@ -176,6 +176,10 @@ header {
 }
 .thermostat-trigger {
   padding: 0px;
+  /* AVA-AGENTONE v3.11: kill double-tap-zoom delay on the +/- buttons so
+     taps register immediately on touch; scrolling still works and fires
+     pointercancel, which now cancels the press without a step. */
+  touch-action: manipulation;
 }
 .clickable {
   cursor: pointer;
