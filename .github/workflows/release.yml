@@ -13,29 +13,25 @@ jobs:
     name: Build and Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      # Build the exact tagged commit (checkout defaults to the pushed tag).
+      # Previously this checked out main, so tagging an older commit would
+      # have silently released whatever main happened to be.
+      - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
-      - name: Install and Build
+      - name: Install, test, build
         run: |
-          npm install --legacy-peer-deps
+          npm ci
+          npm test
           npm run build
-
-      - name: Commit dist to main
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dist/
-          git diff --staged --quiet || git commit -m "chore: update dist for release"
-          git push origin main
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -43,3 +39,22 @@ jobs:
           files: |
             dist/simple-thermostat.js
           generate_release_notes: true
+
+      # Keep the committed dist/ in sync, but only when the tag points at
+      # main HEAD — never rewrite main's dist from an older tag.
+      - name: Commit dist to main
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "Tag does not point at main HEAD — skipping dist commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mv dist /tmp/dist-built
+          git checkout -B main origin/main
+          rm -rf dist
+          mv /tmp/dist-built dist
+          git add dist/
+          git diff --staged --quiet || git commit -m "chore: update dist for release"
+          git push origin main
