@@ -470,9 +470,9 @@ export default class SimpleThermostat extends LitElement {
                   class="thermostat-trigger"
                   icon=${row ? ICONS.PLUS : ICONS.UP}
                   @pointerdown=${() => this._startRamp(1, field)}
-                  @pointerup=${this._stopRamp}
-                  @pointercancel=${this._stopRamp}
-                  @pointerleave=${this._stopRamp}
+                  @pointerup=${() => this._endPress(1, field)}
+                  @pointercancel=${this._cancelPress}
+                  @pointerleave=${this._cancelPress}
                 >
                   <ha-icon .icon=${row ? ICONS.PLUS : ICONS.UP}></ha-icon>
                 </ha-icon-button>
@@ -503,9 +503,9 @@ export default class SimpleThermostat extends LitElement {
                   class="thermostat-trigger"
                   icon=${row ? ICONS.MINUS : ICONS.DOWN}
                   @pointerdown=${() => this._startRamp(-1, field)}
-                  @pointerup=${this._stopRamp}
-                  @pointercancel=${this._stopRamp}
-                  @pointerleave=${this._stopRamp}
+                  @pointerup=${() => this._endPress(-1, field)}
+                  @pointercancel=${this._cancelPress}
+                  @pointerleave=${this._cancelPress}
                 >
                   <ha-icon .icon=${row ? ICONS.MINUS : ICONS.DOWN}></ha-icon>
                 </ha-icon-button>
@@ -562,21 +562,30 @@ export default class SimpleThermostat extends LitElement {
     this._debouncedSetTemperature(this._values)
   }
 
-  // AVA-AGENTONE v3.10: accelerating long-press ramp for setpoint buttons.
+  // AVA-AGENTONE v3.10 (reworked v3.11): accelerating long-press ramp for
+  // setpoint buttons.
   //
   // Behavior:
-  //   - tap (release before 400ms): one step, same as before
+  //   - tap (release before 400ms): one step, fired on release
   //   - hold past 400ms: ~3 ticks/sec (phase 1)
   //   - hold past 1.5s:  ~6 ticks/sec (phase 2)
   //   - hold past 3.5s:  ~10 ticks/sec (phase 3)
-  //   - release / cancel: stop immediately
+  //   - release: stop immediately
+  //   - pointercancel/pointerleave (e.g. the browser took over the gesture
+  //     for scrolling, or the pointer slid off the button): stop with NO step
   //   - hits min/max: stop immediately (added v3.10.1)
+  //
+  // v3.11: the initial step used to fire on pointerdown, which meant starting
+  // a dashboard scroll on the +/- button changed the setpoint by one step
+  // before pointercancel arrived. The tap step now fires on pointerup, so a
+  // scroll gesture never modifies the temperature.
   //
   // Optimistic local updates fire every tick; the existing _debouncedSetTemperature
   // coalesces them into a single (trailing) service call so we don't spam HA.
 
   _rampTimer: any = null
   _rampStart = 0
+  _rampTicked = false
 
   _rampLimitReached(direction: 1 | -1, field: string): boolean {
     const currentValue = Number(this._values[field])
@@ -588,11 +597,11 @@ export default class SimpleThermostat extends LitElement {
   }
 
   _startRamp(direction: 1 | -1, field: string) {
-    // First, do the immediate single step (this is the "tap" behavior).
-    this.setTemperature(direction * this.stepSize, field)
+    this._stopRamp()
     this._rampStart = Date.now()
+    this._rampTicked = false
 
-    // Then schedule the next step at the hold-delay boundary.
+    // Schedule ramp ticks; the first one lands at the 400ms hold boundary.
     const scheduleNext = () => {
       // Stop if we've hit the entity's min/max — no point continuing to fire
       // setTemperature calls that get clamped to the same value.
@@ -612,11 +621,30 @@ export default class SimpleThermostat extends LitElement {
       this._rampTimer = setTimeout(() => {
         // Defensive: if cleared between scheduling and firing, do nothing.
         if (this._rampTimer === null) return
+        this._rampTicked = true
         this.setTemperature(direction * this.stepSize, field)
         scheduleNext()
       }, interval)
     }
     scheduleNext()
+  }
+
+  // pointerup: a deliberate release. If the hold never reached the first ramp
+  // tick this was a plain tap — fire the single step now.
+  _endPress(direction: 1 | -1, field: string) {
+    const ramped = this._rampTicked
+    this._stopRamp()
+    if (!ramped && this._rampStart !== 0) {
+      this.setTemperature(direction * this.stepSize, field)
+    }
+    this._rampStart = 0
+  }
+
+  // pointercancel/pointerleave: the gesture was aborted (scroll takeover,
+  // pointer slid off the button) — stop without stepping.
+  _cancelPress = () => {
+    this._stopRamp()
+    this._rampStart = 0
   }
 
   _stopRamp = () => {
@@ -625,7 +653,7 @@ export default class SimpleThermostat extends LitElement {
       this._rampTimer = null
     }
   }
-  // AVA-AGENTONE END v3.10
+  // AVA-AGENTONE END v3.10/v3.11
 
   setMode = (type: string, mode: string) => {
     if (type && mode) {
