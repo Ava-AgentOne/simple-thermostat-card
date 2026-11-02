@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.11.0";
+var version = "3.11.1";
 
 /**
  * @license
@@ -1127,8 +1127,44 @@ const t={CHILD:2},e$1=t=>(...e)=>({_$litDirective$:t,values:e});class i{construc
  * SPDX-License-Identifier: BSD-3-Clause
  */class e extends i{constructor(i){if(super(i),this.it=A,i.type!==t.CHILD)throw Error(this.constructor.directiveName+"() can only be used in child bindings")}render(r){if(r===A||null==r)return this._t=void 0,this.it=r;if(r===E)return r;if("string"!=typeof r)throw Error(this.constructor.directiveName+"() called with a non-string value");if(r===this.it)return this._t;this.it=r;const s=[r];return s.raw=s,this._t={_$litType$:this.constructor.resultType,strings:s,values:[]}}}e.directiveName="unsafeHTML",e.resultType=1;const o=e$1(e);
 
+const HTML_ESCAPES = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+};
+const escapeHtml = (str) => str.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
+const HTML_UNESCAPES = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+};
+const unescapeHtml = (str) => str.replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => HTML_UNESCAPES[entity]);
+// Entity states and attributes come from integrations (MQTT discovery, cloud
+// devices, custom components), so every string in them is escaped before a
+// template sees it. The rendered template is still inserted as HTML, because
+// templates and the filters below produce HTML on purpose.
+const escapeData = (value) => {
+    if (typeof value === 'string')
+        return escapeHtml(value);
+    if (Array.isArray(value))
+        return value.map(escapeData);
+    if (value && typeof value === 'object') {
+        return Object.keys(value).reduce((memo, key) => {
+            memo[key] = escapeData(value[key]);
+            return memo;
+        }, {});
+    }
+    return value;
+};
 const renderIcon = (icon) => `<ha-icon icon="${icon}"></ha-icon>`;
-squirrelly_minExports.defaultConfig.autoEscape = false; // Turns autoEscaping on
+// Off on purpose: squirrelly escapes after the filters run, which would also
+// escape the HTML that `icon`, `css` and `relativetime` produce. Entity data
+// is escaped up front by escapeData instead.
+squirrelly_minExports.defaultConfig.autoEscape = false;
 squirrelly_minExports.filters.define('icon', renderIcon);
 squirrelly_minExports.filters.define('join', (arr, delimiter = ', ') => arr.join(delimiter));
 squirrelly_minExports.filters.define('css', (str, css) => {
@@ -1137,12 +1173,15 @@ squirrelly_minExports.filters.define('css', (str, css) => {
     }, '');
     return `<span style="${styles}">${str}</span>`;
 });
+// Prints values as Home Assistant has them: strings are unescaped for the JSON,
+// then the whole JSON is escaped so it shows as text.
 squirrelly_minExports.filters.define('debug', (data) => {
     try {
-        return JSON.stringify(data);
+        const json = JSON.stringify(data, (key, value) => typeof value === 'string' ? unescapeHtml(value) : value);
+        return escapeHtml(String(json));
     }
     catch (_a) {
-        return `Not able to read valid JSON object from: ${data}`;
+        return `Not able to read valid JSON object from: ${escapeHtml(String(data))}`;
     }
 });
 function wrapEntities(config, content) {
@@ -1168,17 +1207,18 @@ function renderTemplated({ context, entityId, template = '{{state.text}}', label
             memo[key.replace(trPrefix, '')] = value;
         return memo;
     }, {});
-    // Prepare data to inject as variables into the template
-    const data = Object.assign(Object.assign({}, attributes), { state: {
+    // Prepare data to inject as variables into the template. Variables come
+    // from the card config, so they are passed through as written.
+    const data = Object.assign(Object.assign({}, escapeData(Object.assign(Object.assign({}, attributes), { state: {
             raw: state,
             text: localize(state, `component.${domain}.state._.`),
-        }, ui: translations, v: variables });
+        }, ui: translations }))), { v: variables });
     // Need to define these inside the function to be able to reach local scope
     squirrelly_minExports.filters.define('formatNumber', (str, opts = { decimals: config.decimals }) => {
         return String(formatNumber(str, Object.assign(Object.assign({}, opts), { locale: hass.locale })));
     });
     squirrelly_minExports.filters.define('relativetime', (str, opts = {}) => {
-        return `<ha-relative-time fwd-datetime=${str} with-hass></ha-relative-time>`;
+        return `<ha-relative-time fwd-datetime="${str}" with-hass></ha-relative-time>`;
     });
     squirrelly_minExports.filters.define('translate', (str, prefix = '') => {
         if (!prefix && (domain === 'climate' || domain === 'humidifier')) {
