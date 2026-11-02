@@ -1,5 +1,18 @@
 # Changelog
 
+## v3.11.1 - 2026-11-02
+
+### Security
+- **Entity data in `version: 3` templates is shown as text, not HTML.**
+  - The problem: rendered templates are inserted into the card as HTML, and entity states and attributes went into them unescaped. A device whose name, state or attribute contained HTML (for example one added through MQTT discovery or a cloud integration) could run script on the dashboard of anyone viewing the card.
+  - The fix: every string in an entity's state and attributes is now HTML-escaped before a template sees it.
+  - Still renders as HTML: markup written in templates and card `variables`, and the markup the `icon`, `css` and `relativetime` filters produce.
+- The `relativetime` filter now quotes its attribute, so a value containing spaces can no longer add attributes.
+
+### Changed
+- The `debug` filter prints its JSON as text instead of HTML, with entity values as Home Assistant has them.
+- Template logic such as `@if` also sees the escaped entity strings. In those strings, `&`, `<`, `>`, `"` and `'` read as `&amp;`, `&lt;`, `&gt;`, `&quot;` and `&#39;`. Comparisons against ordinary values, such as `state.raw === "heat"`, are unaffected.
+
 ## v3.11.0 - 2026-07-05
 
 ### Fixed
