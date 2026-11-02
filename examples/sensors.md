@@ -9,7 +9,7 @@ All that happens when you don't pass a template is that a default template is us
 The two following sensors are thus equal
 
 ```yaml
-type: 'custom:simple-thermostat'
+type: 'custom:simple-thermostat-card'
 entity: climate.living_room
 version: 3
 sensors:
@@ -27,7 +27,7 @@ Note that this shows the default configurations, so doing this means you get the
 But you can use this to tweak it.
 
 ```yaml
-type: 'custom:simple-thermostat'
+type: 'custom:simple-thermostat-card'
 entity: climate.living_room
 version: 3
 sensors:
@@ -48,7 +48,7 @@ The `ui.operation` value looks strange, but we'll get back to what the `ui` vari
 > You can use `state` + all attributes from the entity in your template.
 
 ```yaml
-type: 'custom:simple-thermostat'
+type: 'custom:simple-thermostat-card'
 entity: climate.living_room
 version: 3
 sensors:
@@ -59,7 +59,7 @@ sensors:
 Templating with lists of values, use `filters` to prepare it to a string:
 
 ```yaml
-type: 'custom:simple-thermostat'
+type: 'custom:simple-thermostat-card'
 entity: climate.living_room
 version: 3
 sensors:
@@ -72,7 +72,7 @@ sensors:
 All the attributes from the entity referenced can be reached as variables in the template.
 
 ```yaml
-type: 'custom:simple-thermostat'
+type: 'custom:simple-thermostat-card'
 entity: climate.living_room
 version: 3
 sensors:
@@ -88,7 +88,7 @@ This also showcases how you can render a dynamic icon based on a value.
 Lets replace the built-in `State` with an icon
 
 ```yaml
-type: 'custom:simple-thermostat'
+type: 'custom:simple-thermostat-card'
 entity: climate.living_room
 version: 3
 variables:
