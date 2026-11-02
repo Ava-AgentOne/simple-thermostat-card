@@ -46,16 +46,18 @@ resources:
 ## Quick configuration
 
 ```yaml
-type: custom:simple-thermostat
+type: custom:simple-thermostat-card
 entity: climate.your_climate_entity
 ```
 
 That's the minimum. Everything else is optional.
 
+Moving from the original simple-thermostat card? Its type was `custom:simple-thermostat`; change it to `custom:simple-thermostat-card` in your dashboards.
+
 ## More configuration
 
 ```yaml
-type: custom:simple-thermostat
+type: custom:simple-thermostat-card
 entity: climate.living_room
 header:
   name: Living Room
