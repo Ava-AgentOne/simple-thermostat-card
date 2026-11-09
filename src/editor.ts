@@ -323,13 +323,14 @@ export default class SimpleThermostatEditor extends LitElement {
         <div class="ava-mode-grid">
           ${modes.map(
             (mode) => html`
-              <ha-formfield label="${this._formatModeName(mode)}">
+              <label class="ava-mode-toggle">
                 <ha-switch
                   .checked=${this._isHvacModeEnabled(mode)}
                   @change=${(e: any) =>
                     this._hvacModeChanged(mode, e.target.checked)}
                 ></ha-switch>
-              </ha-formfield>
+                <span>${this._formatModeName(mode)}</span>
+              </label>
             `
           )}
         </div>

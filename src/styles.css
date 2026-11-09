@@ -294,6 +294,17 @@ header {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 4px 12px;
 }
+/* Switch + mode name. Home Assistant 2026.11 removed ha-formfield, which
+   used to draw these labels, so the card lays them out itself. */
+.ava-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--primary-text-color);
+}
 /* AVA-AGENTONE END */
 
 /* AVA-AGENTONE START: v3.3 — editor toggle grid + setpoint style vars */
