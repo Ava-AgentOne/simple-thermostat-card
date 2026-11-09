@@ -1,6 +1,7 @@
 import * as Sqrl from 'squirrelly'
 import { html } from 'lit'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
+import entityName from '../entityName'
 import formatNumber from '../formatNumber'
 import renderInfoItem from './infoItem'
 
@@ -152,10 +153,16 @@ export default function renderTemplated({
     return html`<div class="entity-value">${unsafeHTML(value)}</div>`
   }
 
-  const safeLabel = label || '{{friendly_name}}'
-  const heading = safeLabel.match(/^(mdi|hass):.*/)
-    ? renderIcon(safeLabel)
-    : render(safeLabel)
+  // Without a label, show the entity's name the way Home Assistant does. It is
+  // inserted as HTML below, so escape it like any other entity data.
+  let heading
+  if (!label) {
+    heading = escapeHtml(entityName(hass, context) ?? '')
+  } else if (label.match(/^(mdi|hass):.*/)) {
+    heading = renderIcon(label)
+  } else {
+    heading = render(label)
+  }
 
   return html`
     <div class="entity-heading">${unsafeHTML(heading)}</div>

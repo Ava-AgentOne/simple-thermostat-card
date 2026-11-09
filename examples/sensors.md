@@ -5,8 +5,9 @@ You must set `version: 3` on the card to enable these features.
 ### Render a state value from a different entity:
 
 This is the basic, most used case. Just render the state of a different sensor.
-All that happens when you don't pass a template is that a default template is used for label + value.
-The two following sensors are thus equal
+All that happens when you don't pass a template is that a default template is used for the value,
+and the label is the entity's name as Home Assistant shows it (on Home Assistant 2026.3 and older,
+its `friendly_name`). The two following sensors are thus equal
 
 ```yaml
 type: 'custom:simple-thermostat-card'
@@ -17,7 +18,6 @@ sensors:
 
   - entity: sensor.living_room_humidity
     template: '{{state.text}}'
-    label: '{{friendly_name}}'
 ```
 
 ### Override default state/temperature sensors

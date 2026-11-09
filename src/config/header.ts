@@ -1,3 +1,4 @@
+import entityName from '../entityName'
 import { HASS, LooseObject } from '../types'
 
 export interface HAState {
@@ -70,7 +71,7 @@ export default function parseHeaderConfig(
   } else if (config?.name === false) {
     name = false
   } else {
-    name = entity.attributes.friendly_name
+    name = entityName(hass, entity)
   }
 
   let icon: Icon = entity.attributes.hvac_action ? STATE_ICONS : MODE_ICONS
