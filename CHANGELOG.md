@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.12.0 - 2026-11-09
+
+Updates for Home Assistant 2026.11.
+
+### Fixed
+- **Visual editor: the HVAC mode switches had no labels on Home Assistant 2026.11.** The labels came from Home Assistant's `ha-formfield` component, which 2026.11 removed, so the editor showed a row of unlabeled switches. The card now draws the labels itself, on every Home Assistant version.
+
+### Changed
+- **Names match the built-in cards.** Home Assistant 2026.11 builds entity names from the entity and its device (for example "Living room Thermostat"), and the built-in cards show those names. Where you haven't set a name, the card now does the same: the header title, sensor rows, their tooltips, and `version: 3` rows without a `label`. It uses `hass.formatEntityName`, which Home Assistant added in 2026.4; older versions keep showing the `friendly_name`, which Home Assistant is deprecating.
+- **Installing:** the README now describes the Marketplace, which replaced HACS in Home Assistant 2026.11 (**Settings** → **Marketplace** → **Add from link**). Existing HACS installs move to the Marketplace automatically and keep getting updates. Nothing changes in `hacs.json`.
+
 ## v3.11.1 - 2026-11-02
 
 ### Security

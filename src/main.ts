@@ -1,3 +1,4 @@
+import entityName from './entityName'
 import { LitElement, html } from 'lit'
 import { property } from 'lit/decorators.js'
 import { nothing } from 'lit'
@@ -347,7 +348,7 @@ export default class SimpleThermostat extends LitElement {
           const names = [name]
           if (entity) {
             state = hass.states[entity]
-            names.push(state?.attributes?.friendly_name)
+            names.push(entityName(hass, state))
             if (attribute) {
               state = state.attributes[attribute]
             }
