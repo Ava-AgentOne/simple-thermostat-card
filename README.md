@@ -1,6 +1,6 @@
 # Simple Thermostat
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![Marketplace](https://img.shields.io/badge/Marketplace-Custom%20repository-41BDF5.svg?style=for-the-badge)](https://www.home-assistant.io/integrations/marketplace/#custom-repositories)
 ![Build](https://github.com/Ava-AgentOne/simple-thermostat-card/actions/workflows/test.yml/badge.svg)
 ![Validate HACS](https://github.com/Ava-AgentOne/simple-thermostat-card/actions/workflows/hacs.yml/badge.svg)
 
@@ -22,12 +22,24 @@ A Lovelace thermostat card for Home Assistant. Compact layout, configurable head
 
 ## Installation
 
-### Via HACS (recommended)
+### Via the Marketplace (Home Assistant 2026.11 and newer)
+
+Home Assistant 2026.11 replaced HACS with the built-in Marketplace.
+
+1. Go to **Settings** → **Marketplace**.
+2. In the upper-right corner, select **Add from link**.
+3. Enter `https://github.com/Ava-AgentOne/simple-thermostat-card` and select **Add**. The first time, the Marketplace asks you to connect GitHub; the connection only reads public information.
+4. Open **Simple Thermostat** in the list and install it.
+5. **Hard-refresh your browser** (`Ctrl+Shift+R` / `Cmd+Shift+R`) — without this, the browser may keep an older cached version of the card.
+
+Installed it with HACS before? Nothing to do: Home Assistant moved it to the Marketplace, and it keeps getting updates.
+
+### Via HACS (Home Assistant 2026.10 and older)
 
 1. In HACS, open the kebab menu (⋮) → **Custom repositories**.
 2. Add `https://github.com/Ava-AgentOne/simple-thermostat-card` with category **Dashboard**.
 3. Search HACS Frontend for "Simple Thermostat" and install.
-4. **Hard-refresh your browser** (`Ctrl+Shift+R` / `Cmd+Shift+R`) — without this, the browser may keep an older cached version of the card.
+4. **Hard-refresh your browser** (`Ctrl+Shift+R` / `Cmd+Shift+R`).
 
 ### Manual install
 
@@ -94,7 +106,8 @@ Most of these are also exposed in the visual editor.
 ## Compatibility
 
 - **Home Assistant**: 2024.1.0 minimum. Tested on 2026.5.x.
-- **HACS**: 2.0+
+- **Installing**: the Marketplace on Home Assistant 2026.11 and newer, HACS 2.0+ on older versions.
+- **Names**: on Home Assistant 2026.4 and newer, entities without a configured name show the same name as the built-in cards (for example "Living room Thermostat"); older versions show the `friendly_name`.
 - **Browsers**: Modern Chromium, Firefox, Safari (including iOS 18+).
 
 ## Building from source

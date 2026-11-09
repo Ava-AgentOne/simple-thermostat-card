@@ -1,3 +1,4 @@
+import entityName from '../entityName'
 import { html } from 'lit'
 import formatNumber from '../formatNumber'
 import { LooseObject } from '../types'
@@ -124,7 +125,7 @@ export default function renderInfoItem({
     return valueCell
   }
 
-  const tooltip = heading || state?.attributes?.friendly_name || state?.entity_id
+  const tooltip = heading || entityName(hass, state) || state?.entity_id
 
   const headingResult = icon
     ? html`<ha-icon icon="${icon}" title=${tooltip}></ha-icon>`
