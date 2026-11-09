@@ -5,13 +5,18 @@ on:
     tags:
       - 'v*'
 
-permissions:
-  contents: write
+# Each job asks for what it needs
+permissions: {}
 
 jobs:
-  release:
-    name: Build and Release
+  # Installs, tests and builds with a read-only token. `npm ci` runs install
+  # scripts from every dependency, so nothing in this job may be able to write
+  # to the repository or its releases.
+  build:
+    name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # Build the exact tagged commit (checkout defaults to the pushed tag).
       # Previously this checked out main, so tagging an older commit would
@@ -19,7 +24,7 @@ jobs:
       - name: Checkout tag
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -33,16 +38,46 @@ jobs:
           npm test
           npm run build
 
+      - name: Upload build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  # Publishes with a write token, but runs no project or dependency code:
+  # only the files the build job produced.
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Download build
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: dist
+          path: ${{ runner.temp }}/dist
+
       - name: Create Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           files: |
-            dist/simple-thermostat.js
+            ${{ runner.temp }}/dist/simple-thermostat.js
           generate_release_notes: true
 
       # Keep the committed dist/ in sync, but only when the tag points at
       # main HEAD — never rewrite main's dist from an older tag.
       - name: Commit dist to main
+        env:
+          BUILT: ${{ runner.temp }}/dist
         run: |
           git fetch origin main
           if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
@@ -51,10 +86,9 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mv dist /tmp/dist-built
           git checkout -B main origin/main
           rm -rf dist
-          mv /tmp/dist-built dist
+          cp -R "$BUILT" dist
           git add dist/
           git diff --staged --quiet || git commit -m "chore: update dist for release"
           git push origin main
