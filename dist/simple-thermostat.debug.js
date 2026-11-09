@@ -11,7 +11,7 @@
 })();
 
 var name = "simple-thermostat-card";
-var version = "3.11.1";
+var version = "3.12.0";
 
 /**
  * @license
@@ -377,6 +377,17 @@ header {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   grid-gap: 4px 12px;
   gap: 4px 12px;
+}
+/* Switch + mode name. Home Assistant 2026.11 removed ha-formfield, which
+   used to draw these labels, so the card lays them out itself. */
+.ava-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--primary-text-color);
 }
 /* AVA-AGENTONE END */
 
@@ -776,12 +787,13 @@ class SimpleThermostatEditor extends i$1 {
         </div>
         <div class="ava-mode-grid">
           ${modes.map((mode) => b `
-              <ha-formfield label="${this._formatModeName(mode)}">
+              <label class="ava-mode-toggle">
                 <ha-switch
                   .checked=${this._isHvacModeEnabled(mode)}
                   @change=${(e) => this._hvacModeChanged(mode, e.target.checked)}
                 ></ha-switch>
-              </ha-formfield>
+                <span>${this._formatModeName(mode)}</span>
+              </label>
             `)}
         </div>
       </div>
@@ -812,6 +824,33 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     var e = new Error(message);
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
+
+/**
+ * The name to show for an entity when the card config doesn't set one.
+ *
+ * Home Assistant 2026.4 added hass.formatEntityName, the helper the built-in
+ * cards use to build names from the entity and device registries (for example
+ * "Power meter Off-peak consumption"), and 2026.11 switched dashboards to those
+ * names. Older versions only have the friendly_name attribute, which Home
+ * Assistant is deprecating.
+ */
+function entityName(hass, stateObj) {
+    var _a, _b;
+    if (!stateObj || typeof stateObj !== 'object') {
+        return undefined;
+    }
+    if (stateObj.entity_id && typeof (hass === null || hass === void 0 ? void 0 : hass.formatEntityName) === 'function') {
+        try {
+            const name = hass.formatEntityName(stateObj, undefined);
+            if (name)
+                return name;
+        }
+        catch (_c) {
+            // Fall back to friendly_name below
+        }
+    }
+    return (_b = (_a = stateObj.attributes) === null || _a === void 0 ? void 0 : _a.friendly_name) !== null && _b !== void 0 ? _b : stateObj.entity_id;
+}
 
 /**
  * @license
@@ -1197,7 +1236,7 @@ function wrapEntities(config, content) {
     return b ` <div class="entities ${classes.join(' ')}">${content}</div> `;
 }
 function renderTemplated({ context, entityId, template = '{{state.text}}', label, hass, variables = {}, config, localize, openEntityPopover, }) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     const { state, attributes } = context;
     const [domain] = entityId.split('.');
     const lang = hass.selectedLanguage || hass.language;
@@ -1232,10 +1271,18 @@ function renderTemplated({ context, entityId, template = '{{state.text}}', label
         ((_f = ((_d = (_c = config === null || config === void 0 ? void 0 : config.layout) === null || _c === void 0 ? void 0 : _c.entities) !== null && _d !== void 0 ? _d : (_e = config === null || config === void 0 ? void 0 : config.layout) === null || _e === void 0 ? void 0 : _e.sensors)) === null || _f === void 0 ? void 0 : _f.labels) === false) {
         return b `<div class="entity-value">${o(value)}</div>`;
     }
-    const safeLabel = label || '{{friendly_name}}';
-    const heading = safeLabel.match(/^(mdi|hass):.*/)
-        ? renderIcon(safeLabel)
-        : render(safeLabel);
+    // Without a label, show the entity's name the way Home Assistant does. It is
+    // inserted as HTML below, so escape it like any other entity data.
+    let heading;
+    if (!label) {
+        heading = escapeHtml((_g = entityName(hass, context)) !== null && _g !== void 0 ? _g : '');
+    }
+    else if (label.match(/^(mdi|hass):.*/)) {
+        heading = renderIcon(label);
+    }
+    else {
+        heading = render(label);
+    }
     return b `
     <div class="entity-heading">${o(heading)}</div>
     <div class="entity-value">${o(value)}</div>
@@ -1258,7 +1305,7 @@ function toggleEntity(hass, entityId, checked) {
 // Preset mode can be  one of: none, eco, away, boost, comfort, home, sleep, activity
 // See https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/climate/const.py#L36-L57
 function renderInfoItem({ hide = false, hass, state, details, localize, openEntityPopover, }) {
-    var _a, _b, _c;
+    var _a, _b;
     if (hide || typeof state === 'undefined')
         return;
     const { type, heading, icon, unit, decimals } = details;
@@ -1328,7 +1375,7 @@ function renderInfoItem({ hide = false, hass, state, details, localize, openEnti
     if (heading === false) {
         return valueCell;
     }
-    const tooltip = heading || ((_c = state === null || state === void 0 ? void 0 : state.attributes) === null || _c === void 0 ? void 0 : _c.friendly_name) || (state === null || state === void 0 ? void 0 : state.entity_id);
+    const tooltip = heading || entityName(hass, state) || (state === null || state === void 0 ? void 0 : state.entity_id);
     const headingResult = icon
         ? b `<ha-icon icon="${icon}" title=${tooltip}></ha-icon>`
         : b `${heading}:`;
@@ -1490,7 +1537,7 @@ function parseHeaderConfig(config, entity, hass) {
         name = false;
     }
     else {
-        name = entity.attributes.friendly_name;
+        name = entityName(hass, entity);
     }
     let icon = entity.attributes.hvac_action ? STATE_ICONS : MODE_ICONS;
     if (typeof (config === null || config === void 0 ? void 0 : config.icon) !== 'undefined') {
@@ -1892,13 +1939,12 @@ class SimpleThermostat extends i$1 {
         }
         else if (configuredEntities) {
             this.entities = configuredEntities.map((_a) => {
-                var _b;
                 var { name, entity, attribute, unit = '' } = _a, rest = __rest(_a, ["name", "entity", "attribute", "unit"]);
                 let state;
                 const names = [name];
                 if (entity) {
                     state = hass.states[entity];
-                    names.push((_b = state === null || state === void 0 ? void 0 : state.attributes) === null || _b === void 0 ? void 0 : _b.friendly_name);
+                    names.push(entityName(hass, state));
                     if (attribute) {
                         state = state.attributes[attribute];
                     }
