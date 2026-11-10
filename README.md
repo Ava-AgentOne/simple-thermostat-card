@@ -15,6 +15,10 @@ A Lovelace thermostat card for Home Assistant. Compact layout, configurable head
 - **Custom title and icon.** The "BedRoom" + AC icon shown above is set in the visual editor — no need to rename the underlying climate entity.
 - **Per-mode visibility toggles in the visual editor.** The card auto-discovers which HVAC modes your climate entity supports (off / cool / heat_cool / dry / fan_only / etc.) and lets you toggle each one on or off — no YAML needed to hide a button.
 - **Clean setpoint by default.** The big target number drops the °C/°F suffix so the number reads cleanly. Set `show_setpoint_unit: true` if you want the suffix back.
+- **Long-press to ramp.** Hold + or − and the target keeps changing, faster the longer you hold. A tap is still one step, and the ramp stops at the thermostat's minimum and maximum.
+- **Setpoint colour shows what it's doing.** The big number turns red while heating, blue while cooling, amber while drying and teal with the fan. Change the colours with `--st-setpoint-heating-color`, `--st-setpoint-cooling-color`, `--st-setpoint-drying-color` and `--st-setpoint-fan-color` under `style:`.
+- **Template rows.** With `version: 3`, rows can show any state or attribute through templates, with filters for icons, numbers and translations. See [examples/sensors.md](examples/sensors.md).
+- **Suggested in the card picker.** On Home Assistant 2026.6 and newer, the card is offered under **Community** when you pick a climate entity.
 - **CSS variable passthrough.** A `style:` block in YAML lets you customize sizing, weight, colors per card without needing card-mod or theme files.
 - **Modern visual editor.** Built on Home Assistant's `<ha-form>` + selectors, the same architecture HA's own card editors use. Resilient to HA frontend refactors.
 
@@ -102,6 +106,19 @@ Common options:
 | `style` | Map of CSS variables for visual customization |
 
 Most of these are also exposed in the visual editor.
+
+### More options
+
+| Key | What it does |
+|---|---|
+| `header.toggle` / `header.toggles` | One switch, or a list of them, in the header that turns an entity on and off, e.g. `{ entity: switch.ac_display, name: Display }` |
+| `header.faults` | Icons for problem entities, highlighted while the entity is `on`. Add `hide_inactive: true` to hide an icon otherwise, e.g. `[{ entity: binary_sensor.ac_filter, icon: mdi:air-filter }]` |
+| `hide` | `temperature: true` or `state: true` hides the built-in current-temperature or state row |
+| `current_temperature_entity` | Read the current temperature from another sensor |
+| `setpoints` | Which target values the card controls, e.g. `{ target_temp_low: {}, target_temp_high: {} }`. `{ <name>: { hide: true } }` hides one, and `false` hides them all |
+| `service` | Set the temperature through another service instead of `climate.set_temperature`, e.g. `{ domain: script, service: set_ac, data: { mode: quiet } }`. The card adds `entity_id` and the new setpoint values |
+| `layout.mode` | Show or hide the mode buttons' `names`, `icons` and `headings` |
+| `version: 3` | Template rows with `label`, `template` and `variables` — see [examples/sensors.md](examples/sensors.md) |
 
 ## Compatibility
 
